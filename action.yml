@@ -177,22 +177,29 @@ runs:
       with:
         node-version: '18'
     
+    - name: Debug Output
+      run: |
+        echo "ENABLE_CLAUDECODE output: '${{ steps.claudecode-check.outputs.enable_claudecode }}'"
+    
     - name: Install dependencies
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
       run: |
-        echo "::group::Install Deps"
+        echo "Starting Install Deps"
         if [ "${{ steps.claudecode-check.outputs.enable_claudecode }}" == "true" ]; then
-          pip install -r "$ACTION_PATH/claudecode/requirements.txt"
-          npm install -g @anthropic-ai/claude-code
+          echo "Installing via ACTION_PATH: $ACTION_PATH"
+          pip install -r "$ACTION_PATH/claudecode/requirements.txt" || echo "PIP INSTALL FAILED"
+          npm install -g @anthropic-ai/claude-code || echo "NPM INSTALL FAILED"
+        else
+          echo "Skipping install (enable_claudecode is not true)"
         fi
         sudo apt-get update && sudo apt-get install -y jq
-        echo "::endgroup::"
+        echo "Finished Install Deps"
     
     - name: Run ClaudeCode scan
       id: claudecode-scan
-      if: steps.claudecode-check.outputs.enable_claudecode == 'true'
+      # Removed 'if' to force run for debugging
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
