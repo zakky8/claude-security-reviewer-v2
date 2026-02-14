@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit tests for SimpleClaudeRunner.
+Unit tests for ClaudeCliRunner.
 """
 
 import json
@@ -9,19 +9,19 @@ import subprocess
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from claudecode.github_action_audit import SimpleClaudeRunner
+from claudecode.github_action_audit import ClaudeCliRunner
 from claudecode.constants import DEFAULT_CLAUDE_MODEL
 
 
-class TestSimpleClaudeRunner:
-    """Test SimpleClaudeRunner functionality."""
+class TestClaudeCliRunner:
+    """Test ClaudeCliRunner functionality."""
     
     def test_init(self):
         """Test runner initialization."""
-        runner = SimpleClaudeRunner(timeout_minutes=30)
+        runner = ClaudeCliRunner(timeout_minutes=30)
         assert runner.timeout_seconds == 1800
         
-        runner2 = SimpleClaudeRunner()  # Default
+        runner2 = ClaudeCliRunner()  # Default
         assert runner2.timeout_seconds == 1200  # 20 minutes default
     
     @patch('subprocess.run')
@@ -34,7 +34,7 @@ class TestSimpleClaudeRunner:
         )
         
         with patch.dict(os.environ, {'ANTHROPIC_API_KEY': 'test-key'}):
-            runner = SimpleClaudeRunner()
+            runner = ClaudeCliRunner()
             success, error = runner.validate_claude_available()
         
         assert success is True
@@ -60,7 +60,7 @@ class TestSimpleClaudeRunner:
         env.pop('ANTHROPIC_API_KEY', None)
         
         with patch.dict(os.environ, env, clear=True):
-            runner = SimpleClaudeRunner()
+            runner = ClaudeCliRunner()
             success, error = runner.validate_claude_available()
         
         assert success is False
@@ -71,7 +71,7 @@ class TestSimpleClaudeRunner:
         """Test Claude validation when not installed."""
         mock_run.side_effect = FileNotFoundError()
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         success, error = runner.validate_claude_available()
         
         assert success is False
@@ -86,7 +86,7 @@ class TestSimpleClaudeRunner:
             stderr='Error: Authentication failed'
         )
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         success, error = runner.validate_claude_available()
         
         assert success is False
@@ -98,7 +98,7 @@ class TestSimpleClaudeRunner:
         """Test Claude validation timeout."""
         mock_run.side_effect = subprocess.TimeoutExpired(['claude'], 10)
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         success, error = runner.validate_claude_available()
         
         assert success is False
@@ -106,7 +106,7 @@ class TestSimpleClaudeRunner:
     
     def test_run_security_audit_missing_directory(self):
         """Test audit with missing directory."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         success, error, results = runner.run_security_audit(
             Path('/non/existent/path'),
             "test prompt"
@@ -148,7 +148,7 @@ class TestSimpleClaudeRunner:
             stderr=''
         )
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -184,7 +184,7 @@ class TestSimpleClaudeRunner:
         # Create a prompt larger than 1MB
         large_prompt = 'x' * (1024 * 1024 + 1000)
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -204,7 +204,7 @@ class TestSimpleClaudeRunner:
             Mock(returncode=0, stdout='{"findings": []}', stderr='')
         ]
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -242,7 +242,7 @@ class TestSimpleClaudeRunner:
             Mock(returncode=0, stdout=json.dumps(success_result), stderr='')
         ]
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -258,7 +258,7 @@ class TestSimpleClaudeRunner:
         """Test timeout handling."""
         mock_run.side_effect = subprocess.TimeoutExpired(['claude'], 1200)
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -277,7 +277,7 @@ class TestSimpleClaudeRunner:
             Mock(returncode=0, stdout='Still invalid', stderr='')
         ]
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -290,7 +290,7 @@ class TestSimpleClaudeRunner:
     
     def test_extract_security_findings_claude_wrapper(self):
         """Test extraction from Claude Code wrapper format."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Test with result field containing JSON string
         claude_output = {
@@ -307,7 +307,7 @@ class TestSimpleClaudeRunner:
     
     def test_extract_security_findings_direct_format(self):
         """Test that direct findings format was removed - only wrapped format is supported."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Direct format (without 'result' wrapper) should return empty
         claude_output = {
@@ -329,7 +329,7 @@ class TestSimpleClaudeRunner:
     
     def test_extract_security_findings_text_fallback(self):
         """Test that text fallback was removed - only JSON is supported."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Test with result containing text (not JSON)
         claude_output = {
@@ -343,7 +343,7 @@ class TestSimpleClaudeRunner:
     
     def test_extract_security_findings_empty(self):
         """Test extraction with no findings."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Various empty formats
         for output in [None, {}, {"result": ""}, {"other": "data"}]:
@@ -353,14 +353,14 @@ class TestSimpleClaudeRunner:
     
     def test_create_findings_from_text(self):
         """Test that _create_findings_from_text was removed."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Method should not exist
         assert not hasattr(runner, '_create_findings_from_text')
     
     def test_create_findings_from_text_no_issues(self):
         """Test that _create_findings_from_text was removed."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Method should not exist
         assert not hasattr(runner, '_create_findings_from_text')
@@ -372,7 +372,7 @@ class TestClaudeRunnerEdgeCases:
     @patch('subprocess.run')
     def test_claude_output_formats(self, mock_run):
         """Test various Claude output formats."""
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         
         # Test nested JSON in result - result field should be string
         nested_output = {
@@ -412,7 +412,7 @@ class TestClaudeRunnerEdgeCases:
             stderr=''
         )
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
@@ -427,7 +427,7 @@ class TestClaudeRunnerEdgeCases:
         """Test general exception handling."""
         mock_run.side_effect = Exception("Unexpected error")
         
-        runner = SimpleClaudeRunner()
+        runner = ClaudeCliRunner()
         with patch('pathlib.Path.exists', return_value=True):
             success, error, results = runner.run_security_audit(
                 Path('/tmp/test'),
