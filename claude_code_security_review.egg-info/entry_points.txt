@@ -1,0 +1,2 @@
+[console_scripts]
+claude-security-review = claudecode.github_action_audit:main

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Security Analysis</title>
+    <!-- Tailwind CSS (CDN for quick styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .glass {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+            transform: translateY(-1px);
+        }
+
+        .result-card {
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+        }
+
+        .result-card:hover {
+            transform: translateX(4px);
+        }
+
+        .severity-HIGH {
+            border-color: #f85149;
+            background-color: rgba(248, 81, 73, 0.1);
+        }
+
+        .severity-MEDIUM {
+            border-color: #d29922;
+            background-color: rgba(210, 153, 34, 0.1);
+        }
+
+        .severity-LOW {
+            border-color: #dbedff;
+            background-color: rgba(56, 139, 253, 0.1);
+        }
+
+        pre {
+            background: #161b22;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+
+        /* Loading Animation */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- Header -->
+    <header class="text-center mb-10 animate-fade-in-down">
+        <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+            Claude Code: Security Audit
+        </h1>
+        <p class="text-gray-400 max-w-lg mx-auto">AI-powered vulnerability detection for your code snippets.</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-5xl glass rounded-xl p-8 shadow-2xl">
+
+        <!-- Input Form -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- Left: Settings -->
+            <div class="md:col-span-1 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">AI Provider</label>
+                    <select id="provider"
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="openai">OpenAI (Default)</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="openrouter">OpenRouter / DeepSeek</option>
+                        <option value="custom">Local / Custom Endpoint</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">API Key</label>
+                    <input type="password" id="api_key" placeholder="sk-..."
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Model Name</label>
+                    <input type="text" id="model" value="gpt-4o" placeholder="gpt-4o, claude-3-5-sonnet..."
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div id="base_url_container" class="hidden">
+                    <label class="block text-sm font-medium mb-1 text-gray-300">API Base URL</label>
+                    <input type="text" id="api_base" placeholder="http://localhost:8080/v1"
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <button onclick="scanCode()"
+                    class="w-full btn-gradient font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 group">
+                    <i class="fas fa-shield-alt group-hover:rotate-12 transition-transform"></i> Run Scan
+                </button>
+            </div>
+
+            <!-- Right: Code Editor & Uploads -->
+            <div class="md:col-span-2 flex flex-col h-full">
+
+                <!-- Upload Options -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <!-- Upload Files -->
+                    <button onclick="document.getElementById('file_input').click()"
+                        class="group p-4 bg-gray-800/50 hover:bg-gray-700/50 border-2 border-dashed border-gray-700 hover:border-blue-500 rounded-xl transition-all duration-300 text-center cursor-pointer">
+                        <div class="flex flex-col items-center gap-2">
+                            <i
+                                class="fas fa-file-upload text-blue-400 text-xl group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-medium text-gray-300 group-hover:text-blue-400">Upload
+                                Files</span>
+                        </div>
+                    </button>
+
+                    <!-- Upload Folder -->
+                    <button onclick="document.getElementById('folder_input').click()"
+                        class="group p-4 bg-gray-800/50 hover:bg-gray-700/50 border-2 border-dashed border-gray-700 hover:border-purple-500 rounded-xl transition-all duration-300 text-center cursor-pointer">
+                        <div class="flex flex-col items-center gap-2">
+                            <i
+                                class="fas fa-folder-open text-purple-400 text-xl group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-medium text-gray-300 group-hover:text-purple-400">Upload
+                                Folder</span>
+                        </div>
+                    </button>
+
+                    <!-- GitHub Repo -->
+                    <button onclick="toggleGithubInput()"
+                        class="group p-4 bg-gray-800/50 hover:bg-gray-700/50 border-2 border-dashed border-gray-700 hover:border-green-500 rounded-xl transition-all duration-300 text-center cursor-pointer">
+                        <div class="flex flex-col items-center gap-2">
+                            <i
+                                class="fab fa-github text-green-400 text-xl group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-medium text-gray-300 group-hover:text-green-400">GitHub
+                                Repo</span>
+                        </div>
+                    </button>
+                </div>
+
+                <input type="file" id="file_input" class="hidden" multiple onchange="handleFileUpload(this)">
+                <input type="file" id="folder_input" class="hidden" webkitdirectory directory multiple
+                    onchange="handleFileUpload(this)">
+
+                <!-- GitHub Input (Hidden by default) -->
+                <div id="github_input_container" class="hidden mb-4 animate-fade-in-down">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fab fa-github text-gray-400"></i>
+                        </div>
+                        <input type="text" id="github_url" placeholder="https://github.com/username/repo"
+                            class="w-full bg-[#0d1117] border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-gray-200 placeholder-gray-500 focus:outline-none focus:border-green-500 transition-colors">
+                        <button onclick="toggleGithubInput()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-white">
+                            &times;
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected Files Display -->
+                <div id="file_name_display"
+                    class="hidden mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex items-center justify-between">
+                    <span class="text-blue-400 flex items-center gap-2 text-sm">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="file_name_text">3 files selected</span>
+                    </span>
+                    <button onclick="clearFiles()" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <textarea id="code_input"
+                    class="flex-grow w-full h-[400px] bg-[#0d1117] border border-gray-700 rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    placeholder="// Paste your Python, JS, Go, or any code here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results_container" class="mt-10 hidden border-t border-gray-700 pt-8 animate-fade-in-up">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-bug text-red-400"></i> Scan Results
+            </h2>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <div class="bg-[#161b22] p-4 rounded-lg text-center border border-gray-700">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide">High Severity</div>
+                    <div id="count_high" class="text-3xl font-bold text-red-500">0</div>
+                </div>
+                <div class="bg-[#161b22] p-4 rounded-lg text-center border border-gray-700">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide">Medium Severity</div>
+                    <div id="count_medium" class="text-3xl font-bold text-yellow-500">0</div>
+                </div>
+                <div class="bg-[#161b22] p-4 rounded-lg text-center border border-gray-700">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide">Low Severity</div>
+                    <div id="count_low" class="text-3xl font-bold text-blue-500">0</div>
+                </div>
+                <div class="bg-[#161b22] p-4 rounded-lg text-center border border-gray-700">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide">Files Scanned</div>
+                    <div id="count_files" class="text-3xl font-bold text-gray-300">1</div>
+                </div>
+            </div>
+
+            <!-- Findings List -->
+            <div id="findings_list" class="space-y-4">
+                <!-- Finding Cards will be injected here -->
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading_overlay"
+            class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 hidden backdrop-blur-sm">
+            <span class="loader mb-4 border-blue-500"></span>
+            <h3 class="text-xl font-bold text-blue-400 animate-pulse">Analyzing Code...</h3>
+            <p class="text-gray-400 mt-2 text-sm">Reviewing semantics and security logic</p>
+        </div>
+
+    </main>
+
+    <footer class="mt-10 text-gray-500 text-sm mb-10">
+        Powered by <span class="text-blue-400 font-bold">Claude Code Security Review</span>
+    </footer>
+
+    <script>
+        // Toggle Base URL field based on provider
+        document.getElementById('provider').addEventListener('change', function (e) {
+            const isCustom = e.target.value === 'custom' || e.target.value === 'openrouter';
+            document.getElementById('base_url_container').classList.toggle('hidden', !isCustom);
+
+            const modelInput = document.getElementById('model');
+            if (e.target.value === 'anthropic') modelInput.value = 'claude-3-5-sonnet-20241022';
+            else if (e.target.value === 'openai') modelInput.value = 'gpt-4o';
+            else if (e.target.value === 'openrouter') {
+                modelInput.value = 'deepseek/deepseek-r1';
+                document.getElementById('api_base').value = 'https://openrouter.ai/api/v1';
+            }
+        });
+
+        let selectedFiles = [];
+
+        function toggleGithubInput() {
+            const container = document.getElementById('github_input_container');
+            const isHidden = container.classList.contains('hidden');
+
+            if (isHidden) {
+                container.classList.remove('hidden');
+                document.getElementById('github_url').focus();
+                // Clear other inputs
+                clearFiles();
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('github_url').value = "";
+            }
+        }
+
+        function handleFileUpload(input) {
+            // Close GitHub input if open
+            document.getElementById('github_input_container').classList.add('hidden');
+            document.getElementById('github_url').value = "";
+
+            // Clear the OTHER file input
+            if (input.id === 'file_input') {
+                document.getElementById('folder_input').value = "";
+            } else {
+                document.getElementById('file_input').value = "";
+            }
+
+            if (input.files && input.files.length > 0) {
+                selectedFiles = Array.from(input.files);
+                const count = selectedFiles.length;
+                const name = count === 1 ? selectedFiles[0].name : `${count} files selected`;
+
+                document.getElementById('file_name_text').textContent = name;
+                document.getElementById('file_name_display').classList.remove('hidden');
+                document.getElementById('code_input').disabled = true;
+                document.getElementById('code_input').placeholder = "Files selected. Clear to paste code manually.";
+                document.getElementById('code_input').value = "";
+            }
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            document.getElementById('file_input').value = "";
+            document.getElementById('folder_input').value = "";
+            document.getElementById('file_name_display').classList.add('hidden');
+            document.getElementById('code_input').disabled = false;
+            document.getElementById('code_input').placeholder = "// Paste your Python, JS, Go, or any code here...";
+            document.getElementById('code_input').value = "";
+        }
+
+        async function scanCode() {
+            const apiKey = document.getElementById('api_key').value;
+            const code = document.getElementById('code_input').value;
+            const githubUrl = document.getElementById('github_url').value;
+
+            if (!apiKey) { alert("Please enter an API Key."); return; }
+            if (!code && selectedFiles.length === 0 && !githubUrl) {
+                alert("Please provide code, upload files, or enter a GitHub URL.");
+                return;
+            }
+
+            // Show Loader
+            document.getElementById('loading_overlay').classList.remove('hidden');
+            document.getElementById('results_container').classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('provider', document.getElementById('provider').value);
+            formData.append('api_key', apiKey);
+            formData.append('model', document.getElementById('model').value);
+
+            const apiBase = document.getElementById('api_base').value;
+            if (apiBase) formData.append('api_base', apiBase);
+
+            if (githubUrl) {
+                formData.append('github_url', githubUrl);
+            } else if (selectedFiles.length > 0) {
+                selectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+            } else {
+                formData.append('code_content', code);
+                formData.append('file_name', "snippet." + inferExtension(code));
+            }
+
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    alert('Scan Failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Network Error: ' + err.message);
+            } finally {
+                document.getElementById('loading_overlay').classList.add('hidden');
+            }
+        }
+
+        function inferExtension(code) {
+            if (code.includes('def ') || code.includes('import ')) return 'py';
+            if (code.includes('function') || code.includes('const ') || code.includes('=>')) return 'js';
+            if (code.includes('package main')) return 'go';
+            if (code.includes('#include')) return 'c';
+            return 'txt';
+        }
+
+        function displayResults(data) {
+            const container = document.getElementById('results_container');
+            const findingsList = document.getElementById('findings_list');
+            findingsList.innerHTML = '';
+
+            const summary = data.analysis_summary || {};
+            document.getElementById('count_high').innerText = summary.high_severity || 0;
+            document.getElementById('count_medium').innerText = summary.medium_severity || 0;
+            document.getElementById('count_low').innerText = summary.low_severity || 0;
+            document.getElementById('count_files').innerText = summary.files_reviewed || 1;
+
+            const findings = data.findings || [];
+
+            if (findings.length === 0) {
+                findingsList.innerHTML = `
+                    <div class="p-6 bg-[#0d1117] border border-green-900/50 rounded-lg text-center">
+                        <i class="fas fa-check-circle text-4xl text-green-500 mb-2"></i>
+                        <h3 class="text-xl font-bold text-green-400">No Vulnerabilities Found</h3>
+                        <p class="text-gray-400">Your code looks secure based on this analysis.</p>
+                    </div>`;
+            } else {
+                findings.forEach(f => {
+                    const sevClass = `severity-${f.severity.toUpperCase()}`;
+                    const category = f.category || 'general';
+                    const confidence = f.confidence ? `• Confidence: ${f.confidence}` : '';
+                    const exploit = f.exploit_scenario ? `
+                        <div class="mt-4 p-3 bg-red-900/20 border-l-4 border-red-500 rounded-r">
+                            <div class="text-xs font-bold text-red-400 uppercase mb-1">Exploit Scenario</div>
+                            <div class="text-sm text-gray-300 italic">${f.exploit_scenario}</div>
+                        </div>
+                    ` : '';
+
+                    const html = `
+                        <div class="result-card bg-[#161b22] p-6 rounded-lg ${sevClass}">
+                            <div class="flex flex-col md:flex-row justify-between md:items-start gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <h3 class="text-lg font-bold text-gray-200">${f.title}</h3>
+                                    <span class="px-2 py-0.5 rounded text-xs font-mono bg-gray-800 text-gray-400 border border-gray-700">
+                                        ${category}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                     <span class="text-xs text-gray-500 font-mono">${confidence}</span>
+                                     <span class="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider ${sevClass.replace('bg-', 'text-').replace('0.1', '1')} border border-current">
+                                        ${f.severity}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-400 mb-4 text-sm leading-relaxed">${f.description}</p>
+                            
+                            ${exploit}
+                            
+                            <div class="bg-[#0d1117] p-3 rounded border border-gray-800 my-4 hidden md:block group hover:border-gray-600 transition-colors">
+                                <div class="text-xs text-gray-500 mb-1 font-mono flex gap-2">
+                                    <i class="far fa-file"></i> ${f.file}:${f.line || '?'}
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-700 pt-3 mt-3">
+                                <span class="text-xs font-bold text-blue-400 uppercase">Recommendation</span>
+                                <p class="text-sm text-gray-300 mt-1">${f.recommendation || 'Review code logic.'}</p>
+                            </div>
+                        </div>
+                    `;
+                    findingsList.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            container.classList.remove('hidden');
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>

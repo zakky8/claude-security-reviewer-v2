@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  claude-security:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    restart: always
+    volumes:
+      - .:/app # Allows for hot-reloading during dev, can be removed for pure prod
