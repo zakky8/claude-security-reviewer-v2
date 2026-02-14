@@ -59,7 +59,7 @@ class TestHelperFunctions:
             assert "Invalid PR_NUMBER" in str(exc_info.value)
     
     @patch('claudecode.github_action_audit.GitHubActionClient')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     def test_initialize_clients_success(self, mock_claude_runner, mock_github_client):
         """Test successful client initialization."""
         mock_github_instance = MagicMock()
@@ -86,7 +86,7 @@ class TestHelperFunctions:
         assert "GitHub API error" in str(exc_info.value)
     
     @patch('claudecode.github_action_audit.GitHubActionClient')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     def test_initialize_clients_claude_failure(self, mock_claude_runner, mock_github_client):
         """Test error when Claude runner initialization fails."""
         mock_github_client.return_value = MagicMock()

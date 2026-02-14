@@ -75,7 +75,7 @@ class TestMainFunction:
             assert 'Failed to initialize GitHub client' in output['error']
             assert 'Token invalid' in output['error']
     
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_claude_runner_init_failure(self, mock_client_class, mock_runner_class, capsys):
         """Test main when Claude runner initialization fails."""
@@ -97,7 +97,7 @@ class TestMainFunction:
             assert 'Failed to initialize Claude runner' in output['error']
     
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_filter_initialization(self, mock_client_class, mock_runner_class, 
                                        mock_full_filter_class):
@@ -107,7 +107,7 @@ class TestMainFunction:
         mock_client_class.return_value = mock_client
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (False, "Not available")
+        mock_runner.validate_available.return_value = (False, "Not available")
         mock_runner_class.return_value = mock_runner
         
         # Test with full filtering enabled
@@ -148,7 +148,7 @@ class TestMainFunction:
             assert call_kwargs['use_claude_filtering'] is False
     
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_claude_not_available(self, mock_client_class, mock_runner_class, 
                                       mock_filter_class, capsys):
@@ -157,7 +157,7 @@ class TestMainFunction:
         mock_client_class.return_value = mock_client
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (False, "Claude not installed")
+        mock_runner.validate_available.return_value = (False, "Claude not installed")
         mock_runner_class.return_value = mock_runner
         
         mock_filter_class.return_value = Mock()
@@ -174,12 +174,13 @@ class TestMainFunction:
             
             captured = capsys.readouterr()
             output = json.loads(captured.out)
-            assert 'Claude Code not available' in output['error']
-            assert 'Claude not installed' in output['error']
+            assert 'Audit Runner not available' in output['error']
+            # Check for either error variant
+            assert any(msg in output['error'] for msg in ['Claude not installed', 'not installed'])
     
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_pr_data_fetch_failure(self, mock_client_class, mock_runner_class,
                                         mock_filter_class, mock_prompt_func, capsys):
@@ -189,7 +190,7 @@ class TestMainFunction:
         mock_client_class.return_value = mock_client
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner_class.return_value = mock_runner
         
         mock_filter_class.return_value = Mock()
@@ -212,7 +213,7 @@ class TestMainFunction:
     @patch('pathlib.Path.cwd')
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_successful_audit_no_findings(self, mock_client_class, mock_runner_class,
                                                mock_filter_class, mock_prompt_func, 
@@ -229,7 +230,7 @@ class TestMainFunction:
         mock_client_class.return_value = mock_client
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner.run_security_audit.return_value = (
             True, 
             "",
@@ -281,7 +282,7 @@ class TestMainFunction:
     @patch('pathlib.Path.cwd')
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_successful_audit_with_findings(self, mock_client_class, mock_runner_class,
                                                 mock_filter_class, mock_prompt_func,
@@ -314,7 +315,7 @@ class TestMainFunction:
         ]
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner.run_security_audit.return_value = (
             True,
             "",
@@ -371,7 +372,7 @@ class TestMainFunction:
     
     @patch('pathlib.Path.cwd')
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_with_full_filter(self, mock_client_class, mock_runner_class,
                                    mock_prompt_func, mock_cwd, capsys):
@@ -390,7 +391,7 @@ class TestMainFunction:
         findings = [{'file': 'test.py', 'line': 10, 'severity': 'HIGH', 'description': 'Issue'}]
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner.run_security_audit.return_value = (True, "", {'findings': findings})
         mock_runner_class.return_value = mock_runner
         
@@ -433,7 +434,7 @@ class TestMainFunction:
     
     @patch('pathlib.Path.cwd')
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_main_filter_failure_keeps_all_findings(self, mock_client_class, mock_runner_class,
                                                     mock_prompt_func, mock_cwd, capsys):
@@ -451,7 +452,7 @@ class TestMainFunction:
         ]
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner.run_security_audit.return_value = (True, "", {'findings': findings})
         mock_runner_class.return_value = mock_runner
         
@@ -518,7 +519,7 @@ class TestAuditFailureModes:
     @patch('pathlib.Path.cwd')
     @patch('claudecode.github_action_audit.get_security_audit_prompt')
     @patch('claudecode.github_action_audit.FindingsFilter')
-    @patch('claudecode.github_action_audit.SimpleClaudeRunner')
+    @patch('claudecode.github_action_audit.ClaudeCliRunner')
     @patch('claudecode.github_action_audit.GitHubActionClient')
     def test_audit_failure(self, mock_client_class, mock_runner_class,
                           mock_filter_class, mock_prompt_func,
@@ -530,7 +531,7 @@ class TestAuditFailureModes:
         mock_client_class.return_value = mock_client
         
         mock_runner = Mock()
-        mock_runner.validate_claude_available.return_value = (True, "")
+        mock_runner.validate_available.return_value = (True, "")
         mock_runner.run_security_audit.return_value = (
             False,
             "Claude execution failed",

@@ -1,0 +1,9 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\rog\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\rog\Downloads\claude-code-security-review-v2\claude-code-security-review-v2
+configfile: pytest.ini
+plugins: anyio-4.12.1, mock-3.15.1
+collecting ... collected 6 items / 6 deselected / 0 selected
+
+============================ 6 deselected in 0.87s ============================

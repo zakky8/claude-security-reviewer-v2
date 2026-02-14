@@ -10,16 +10,16 @@ from abc import ABC, abstractmethod
 
 # Attempt to import dependencies, handling missing ones gracefully
 try:
-    from anthropic import Anthropic, RateLimitError as AnthropicRateLimitError, APIStatusError as AnthropicAPIStatusError, APITimeoutError as AnthropicAPITimeoutError
+    from anthropic import Anthropic, RateLimitError as AnthropicRateLimitError, APIStatusError as AnthropicAPIStatusError, APITimeoutError as AnthropicAPITimeoutError # type: ignore
 except ImportError:
     Anthropic = None
     
 try:
-    from openai import OpenAI, RateLimitError as OpenAIRateLimitError, APIStatusError as OpenAIAPIStatusError, APITimeoutError as OpenAIAPITimeoutError
+    from openai import OpenAI, RateLimitError as OpenAIRateLimitError, APIStatusError as OpenAIAPIStatusError, APITimeoutError as OpenAIAPITimeoutError # type: ignore
 except ImportError:
     OpenAI = None
 
-from tenacity import (
+from tenacity import ( # type: ignore
     retry,
     stop_after_attempt,
     wait_exponential,
@@ -27,15 +27,15 @@ from tenacity import (
     before_sleep_log,
 )
 
-from claudecode.constants import (
+from claudecode.constants import ( # type: ignore
     DEFAULT_CLAUDE_MODEL, DEFAULT_TIMEOUT_SECONDS, DEFAULT_MAX_RETRIES,
     PROMPT_TOKEN_LIMIT,
 )
 
 DEFAULT_OPENAI_MODEL = "gpt-4"
 
-from claudecode.json_parser import parse_json_with_fallbacks
-from claudecode.logger import get_logger
+from claudecode.json_parser import parse_json_with_fallbacks # type: ignore
+from claudecode.logger import get_logger # type: ignore
 
 logger = get_logger(__name__)
 
@@ -86,7 +86,7 @@ class BaseLLMClient(ABC):
     @abstractmethod
     def validate_api_access(self) -> Tuple[bool, str]:
         """Validate API access."""
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def call_with_retry(self, 
@@ -94,7 +94,7 @@ class BaseLLMClient(ABC):
                        system_prompt: Optional[str] = None,
                        max_tokens: int = PROMPT_TOKEN_LIMIT) -> Tuple[bool, str, str]:
         """Make API call with retry logic."""
-        pass
+        raise NotImplementedError()
 
     def analyze_single_finding(self, 
                                finding: Dict[str, Any], 
@@ -279,7 +279,8 @@ class ClaudeAPIClient(BaseLLMClient):
         
         try:
             response = self.client.messages.create(**api_params)
-            text = "".join([b.text for b in response.content if hasattr(b, 'text')])
+            # Use getattr to safely access text attribute and satisfy linter
+            text = "".join([getattr(b, 'text', '') for b in response.content])
             self._record_success()
             return True, text, ""
         except Exception as e:
@@ -293,20 +294,18 @@ class OpenAIClient(BaseLLMClient):
     def __init__(self, model: Optional[str] = None, api_key: Optional[str] = None, api_base: Optional[str] = None, **kwargs):
         # Set defaults if not provided
         model = model or DEFAULT_OPENAI_MODEL
-        api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        # Use provided key, env var, or dummy fallback to ensure it's not None
+        api_key = api_key or os.environ.get("OPENAI_API_KEY") or "dummy"
         # api_base argument takes precedence over environment variable
         api_base = api_base or os.environ.get("OPENAI_API_BASE")
         
-        super().__init__(model=model, api_key=api_key, api_base=api_base, **kwargs)
-        
-        if not self.api_key:
-            self.api_key = "dummy"
+        super().__init__(model=model, api_key=str(api_key), api_base=api_base, **kwargs)
             
         if not OpenAI:
             raise ImportError("OpenAI package is not installed. Please install it with `pip install openai`.")
             
         # Ensure base_url is passed if provided
-        client_args = {"api_key": self.api_key}
+        client_args: Dict[str, Any] = {"api_key": self.api_key}
         if self.api_base:
             client_args["base_url"] = self.api_base
             

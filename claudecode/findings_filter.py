@@ -5,9 +5,9 @@ from typing import Dict, Any, List, Tuple, Optional, Pattern
 import time
 from dataclasses import dataclass, field
 
-from claudecode.claude_api_client import get_llm_client, BaseLLMClient
-from claudecode.constants import DEFAULT_CLAUDE_MODEL
-from claudecode.logger import get_logger
+from claudecode.claude_api_client import get_llm_client, BaseLLMClient # type: ignore
+from claudecode.constants import DEFAULT_CLAUDE_MODEL # type: ignore
+from claudecode.logger import get_logger # type: ignore
 
 logger = get_logger(__name__)
 
@@ -204,10 +204,15 @@ class FindingsFilter:
                 )
                 
                 # Validate API access
-                valid, error = self.llm_client.validate_api_access()
-                if not valid:
-                    logger.warning(f"AI API validation failed: {error}")
-                    self.llm_client = None
+                client = self.llm_client
+                if client is not None:
+                    valid, error = client.validate_api_access()
+                    if not valid:
+                        logger.warning(f"AI API validation failed: {error}")
+                        self.llm_client = None
+                        self.use_claude_filtering = False
+                else:
+                    logger.warning("No AI client initialized")
                     self.use_claude_filtering = False
             except Exception as e:
                 logger.error(f"Failed to initialize AI client: {str(e)}")
@@ -281,9 +286,13 @@ class FindingsFilter:
             
             for orig_idx, finding in findings_after_hard:
                 # Call AI API for single finding
-                success, analysis_result, error_msg = self.llm_client.analyze_single_finding(
-                    finding, pr_context, self.custom_filtering_instructions
-                )
+                client_instance = self.llm_client
+                if client_instance is not None:
+                    success, analysis_result, error_msg = client_instance.analyze_single_finding(
+                        finding, pr_context, self.custom_filtering_instructions
+                    )
+                else:
+                    success, analysis_result, error_msg = False, {}, "LLM client not available"
                 
                 if success and analysis_result:
                     # Process Claude's analysis for single finding

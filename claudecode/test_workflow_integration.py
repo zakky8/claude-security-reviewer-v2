@@ -3,22 +3,23 @@
 Integration tests for full ClaudeCode workflow.
 """
 
-import pytest
+import pytest # type: ignore
 import json
 import os
 import tempfile
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from claudecode.github_action_audit import main
+from claudecode.github_action_audit import main # type: ignore
 
 
 class TestFullWorkflowIntegration:
     """Test complete workflow scenarios."""
     
+    
     @patch('claudecode.github_action_audit.subprocess.run')
     @patch('requests.get')
-    def test_full_workflow_with_real_pr_structure(self, mock_get, mock_run):
+    def test_full_workflow_with_real_pr_structure(self, mock_get, mock_run, monkeypatch, tmp_path):
         """Test complete workflow with realistic PR data."""
         # Setup GitHub API responses
         pr_response = Mock()
@@ -185,22 +186,20 @@ index 8901234..5678901 100644
         mock_run.side_effect = [version_result, audit_result, audit_result]
         
         # Run the workflow
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            
-            with patch.dict(os.environ, {
-                'GITHUB_REPOSITORY': 'company/app',
-                'PR_NUMBER': '456',
-                'GITHUB_TOKEN': 'test-token',
-                'ANTHROPIC_API_KEY': 'test-api-key',
-                'ENABLE_CLAUDE_FILTERING': 'false'  # Use simple filter
-            }):
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
-                
-                # Should exit with 1 due to HIGH severity findings
-                assert exc_info.value.code == 1
+        monkeypatch.chdir(tmp_path)
         
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'company/app',
+            'PR_NUMBER': '456',
+            'GITHUB_TOKEN': 'test-token',
+            'ANTHROPIC_API_KEY': 'test-api-key',
+            'ENABLE_CLAUDE_FILTERING': 'false'  # Use simple filter
+        }):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            
+            # Should exit with 1 due to HIGH severity findings
+            assert exc_info.value.code == 1
         # Verify API calls
         assert mock_get.call_count == 3
         assert mock_run.call_count == 2
@@ -214,7 +213,7 @@ index 8901234..5678901 100644
     
     @patch('subprocess.run')
     @patch('requests.get')
-    def test_workflow_with_llm_filtering(self, mock_get, mock_run):
+    def test_workflow_with_llm_filtering(self, mock_get, mock_run, monkeypatch, tmp_path):
         """Test workflow with LLM-based false positive filtering."""
         # Setup minimal API responses
         pr_response = Mock()
@@ -264,22 +263,20 @@ index 8901234..5678901 100644
             Mock(returncode=0, stdout=json.dumps({"findings": claude_findings}), stderr='')
         ]
         
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+        monkeypatch.chdir(tmp_path)
+        
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'company/app',
+            'PR_NUMBER': '789',
+            'GITHUB_TOKEN': 'test-token',
+            'ANTHROPIC_API_KEY': 'test-api-key',
+            'ENABLE_CLAUDE_FILTERING': 'false'  # Use simple filter to avoid isinstance issues
+        }):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
             
-            with patch.dict(os.environ, {
-                'GITHUB_REPOSITORY': 'company/app',
-                'PR_NUMBER': '789',
-                'GITHUB_TOKEN': 'test-token',
-                'ANTHROPIC_API_KEY': 'test-api-key',
-                'ENABLE_CLAUDE_FILTERING': 'false'  # Use simple filter to avoid isinstance issues
-            }):
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
-                
-                # Should exit 0 - no HIGH severity findings
-                assert exc_info.value.code == 0
-    
+            # Should exit 0 - no HIGH severity findings
+            assert exc_info.value.code == 0
     def test_workflow_error_recovery(self):
         """Test workflow recovery from various errors."""
         with patch('requests.get') as mock_get:
@@ -298,7 +295,7 @@ index 8901234..5678901 100644
     
     @patch('subprocess.run')
     @patch('requests.get')
-    def test_workflow_with_no_security_issues(self, mock_get, mock_run):
+    def test_workflow_with_no_security_issues(self, mock_get, mock_run, monkeypatch, tmp_path):
         """Test workflow when no security issues are found."""
         # Setup clean PR
         pr_response = Mock()
@@ -340,32 +337,30 @@ index 8901234..5678901 100644
             Mock(returncode=0, stdout='{"findings": [], "analysis_summary": {"review_completed": true}}', stderr='')
         ]
         
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+        monkeypatch.chdir(tmp_path)
+        
+        output_file = tmp_path / 'output.json'
             
-            output_file = Path(tmpdir) / 'output.json'
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'company/app',
+            'PR_NUMBER': '999',
+            'GITHUB_TOKEN': 'test-token',
+            'ANTHROPIC_API_KEY': 'test-api-key'
+        }):
+            with patch('sys.stdout', open(output_file, 'w')):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
             
-            with patch.dict(os.environ, {
-                'GITHUB_REPOSITORY': 'company/app',
-                'PR_NUMBER': '999',
-                'GITHUB_TOKEN': 'test-token',
-                'ANTHROPIC_API_KEY': 'test-api-key'
-            }):
-                with patch('sys.stdout', open(output_file, 'w')):
-                    with pytest.raises(SystemExit) as exc_info:
-                        main()
-                
-                # Should exit 0 - no findings
-                assert exc_info.value.code == 0
-            
-            # Verify output
-            with open(output_file) as f:
-                output = json.load(f)
-            
-            assert output['pr_number'] == 999
-            assert output['repo'] == 'company/app'
-            assert len(output['findings']) == 0
-            assert output['filtering_summary']['total_original_findings'] == 0
+            # Should exit 0 - no findings
+            assert exc_info.value.code == 0
+        # Verify output
+        with open(output_file) as f:
+            output = json.load(f)
+        
+        assert output['pr_number'] == 999
+        assert output['repo'] == 'company/app'
+        assert len(output['findings']) == 0
+        assert output['filtering_summary']['total_original_findings'] == 0
 
 
 class TestWorkflowEdgeCases:
@@ -373,7 +368,7 @@ class TestWorkflowEdgeCases:
     
     @patch('subprocess.run')
     @patch('requests.get')
-    def test_workflow_with_massive_pr(self, mock_get, mock_run):
+    def test_workflow_with_massive_pr(self, mock_get, mock_run, monkeypatch, tmp_path):
         """Test workflow with very large PR."""
         # Create a massive file list
         large_files = [
@@ -430,24 +425,23 @@ index 0000000..1234567
             Mock(returncode=0, stdout='{"findings": []}', stderr='')
         ]
         
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+        monkeypatch.chdir(tmp_path)
+        
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'company/app',
+            'PR_NUMBER': '1000',
+            'GITHUB_TOKEN': 'test-token',
+            'ANTHROPIC_API_KEY': 'test-api-key'
+        }):
+            # Should handle large PR without crashing
+            with pytest.raises(SystemExit) as exc_info:
+                main()
             
-            with patch.dict(os.environ, {
-                'GITHUB_REPOSITORY': 'company/app',
-                'PR_NUMBER': '1000',
-                'GITHUB_TOKEN': 'test-token',
-                'ANTHROPIC_API_KEY': 'test-api-key'
-            }):
-                # Should handle large PR without crashing
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
-                
-                assert exc_info.value.code == 0
+            assert exc_info.value.code == 0
     
     @patch('subprocess.run')
     @patch('requests.get')
-    def test_workflow_with_binary_files(self, mock_get, mock_run):
+    def test_workflow_with_binary_files(self, mock_get, mock_run, monkeypatch, tmp_path):
         """Test workflow with binary files in PR."""
         pr_response = Mock()
         pr_response.json.return_value = {
@@ -509,17 +503,16 @@ index 1234567..8901234 100644
             Mock(returncode=0, stdout='{"findings": []}', stderr='')
         ]
         
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
+        monkeypatch.chdir(tmp_path)
+        
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'company/app',
+            'PR_NUMBER': '2000',
+            'GITHUB_TOKEN': 'test-token',
+            'ANTHROPIC_API_KEY': 'test-api-key'
+        }):
+            # Should handle binary files gracefully
+            with pytest.raises(SystemExit) as exc_info:
+                main()
             
-            with patch.dict(os.environ, {
-                'GITHUB_REPOSITORY': 'company/app',
-                'PR_NUMBER': '2000',
-                'GITHUB_TOKEN': 'test-token',
-                'ANTHROPIC_API_KEY': 'test-api-key'
-            }):
-                # Should handle binary files gracefully
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
-                
-                assert exc_info.value.code == 0
+            assert exc_info.value.code == 0

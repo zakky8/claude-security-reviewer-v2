@@ -11,7 +11,7 @@ class TestImports:
         """Test that the main module can be imported."""
         from claudecode import github_action_audit
         assert hasattr(github_action_audit, 'GitHubActionClient')
-        assert hasattr(github_action_audit, 'SimpleClaudeRunner')
+        assert hasattr(github_action_audit, 'ClaudeCliRunner')
         # SimpleFindingsFilter was removed
         assert hasattr(github_action_audit, 'main')
     
