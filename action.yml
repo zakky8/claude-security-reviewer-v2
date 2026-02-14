@@ -178,6 +178,7 @@ runs:
         node-version: '18'
     
     - name: Debug Output
+      shell: bash
       run: |
         echo "ENABLE_CLAUDECODE output: '${{ steps.claudecode-check.outputs.enable_claudecode }}'"
     
