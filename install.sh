@@ -9,13 +9,13 @@ if [ -f "server.py" ]; then
     echo "📂 Found server.py in current directory. Skipping clone..."
 else
     # Clone the repository
-    if [ ! -d "claude-code-security-review-v2" ]; then
+    if [ ! -d "claude-security-reviewer-v2" ]; then
         echo "📂 Cloning repository..."
-        git clone https://github.com/anthropics/claude-code-security-review.git
-        cd claude-code-security-review || exit
+        git clone https://github.com/zakky8/claude-security-reviewer-v2.git
+        cd claude-security-reviewer-v2 || exit
     else
         echo "📂 Repository already exists, jumping in..."
-        cd claude-code-security-review || exit
+        cd claude-security-reviewer-v2 || exit
     fi
 fi
 

@@ -6,12 +6,12 @@ if exist "server.py" (
     echo 📂 Found server.py in current directory. Skipping clone...
 ) else (
     :: Clone repository if not ensuring
-    if not exist "claude-code-security-review-v2" (
+    if not exist "claude-security-reviewer-v2" (
         echo 📂 Cloning repository...
-        git clone https://github.com/anthropics/claude-code-security-review.git
-        cd claude-code-security-review
+        git clone https://github.com/zakky8/claude-security-reviewer-v2.git
+        cd claude-security-reviewer-v2
     ) else (
-        cd claude-code-security-review
+        cd claude-security-reviewer-v2
     )
 )
 

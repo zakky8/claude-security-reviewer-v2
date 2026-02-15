@@ -23,7 +23,7 @@ So I built this. A system that doesn't just look for generic patterns, but actua
 ### 1. Ready to "Get Shit Done"? (NO CLONE REQUIRED)
 Run this from any terminal on any machine:
 ```powershell
-npx github:zakky8/claude-code-security-reviewer-v2
+npx github:zakky8/claude-security-reviewer-v2
 ```
 
 **Verify arrival:**
