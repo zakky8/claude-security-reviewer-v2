@@ -1,0 +1,15 @@
+{
+    "name": "claude-security-reviewer-v2",
+    "version": "1.0.1",
+    "description": "AI-powered security review tool for Claude Code",
+    "bin": {
+        "claude-security-reviewer-v2": "./bin/claude-security.js",
+        "get-shit-done-cc": "./bin/claude-security.js"
+    },
+    "scripts": {
+        "start": "python server.py"
+    },
+    "dependencies": {
+        "prompts": "^2.4.2"
+    }
+}
