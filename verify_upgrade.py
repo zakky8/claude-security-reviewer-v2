@@ -6,7 +6,8 @@ import subprocess
 import secrets
 
 # Configuration
-BASE_URL = "http://localhost:8089"
+PORT = 8095
+BASE_URL = f"http://localhost:{PORT}"
 API_TOKEN = secrets.token_urlsafe(32)
 
 class Verifier:

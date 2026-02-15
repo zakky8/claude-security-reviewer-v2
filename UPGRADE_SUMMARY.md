@@ -184,14 +184,14 @@ git pull origin main
 
 # Build and run
 docker build -t claude-security:2.1.0 .
-docker run -d -p 8089:8000 \
+docker run -d -p 8095:8095 \
   -e ANTHROPIC_API_KEY=sk-... \
   -e API_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))") \
   claude-security:2.1.0
 
 # Test
 curl -H "Authorization: Bearer $API_TOKEN" \
-  http://localhost:8089/health
+  http://localhost:8095/health
 ```
 
 ### Option B: Virtual Environment

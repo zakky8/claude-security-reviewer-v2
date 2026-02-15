@@ -49,7 +49,7 @@ cat UPGRADE_SUMMARY.md  # Get quick overview (10 min)
 git pull origin main
 docker build -t claude-security:2.1.0 .
 export API_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
-docker run -d -p 8089:8000 \
+docker run -d -p 8095:8095 \
   -e ANTHROPIC_API_KEY=sk-... \
   -e API_TOKEN=$API_TOKEN \
   claude-security:2.1.0

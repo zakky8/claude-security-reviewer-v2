@@ -184,7 +184,7 @@ This comprehensive upgrade package contains everything needed to:
 - API credentials (Anthropic, OpenAI)
 - Custom API endpoints
 - Model selection
-- Web server configuration
+- Web- **CORS Configuration**: Restricted to `localhost:8095` for security.
 - Security (API token)
 - Timeouts
 - Feature flags
