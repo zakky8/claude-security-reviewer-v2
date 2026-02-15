@@ -63,6 +63,18 @@ python server.py
 npx github:zakky8/claude-security-reviewer-v2
 ```
 
+## 🗑️ Uninstalling
+
+If you installed locally or want to clean up:
+
+```bash
+# Windows
+.\uninstall.bat
+
+# Mac/Linux
+./uninstall.sh
+```
+
 ---
 
 ## 🛠️ Usage
