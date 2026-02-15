@@ -27,9 +27,22 @@ npx github:zakky8/claude-security-reviewer-v2
 ```
 
 **Verify arrival:**
-Open your browser to [http://localhost:8089](http://localhost:8089)
+Open your browser to [http://127.0.0.1:8089](http://127.0.0.1:8089)
 
-### 2. Local Installation & Uninstalling
+### 2. Permanent Install (Global)
+If you want to install it once and run it anywhere:
+```powershell
+# Install
+npm install -g github:zakky8/claude-security-reviewer-v2
+
+# Run
+claude-security-reviewer-v2
+
+# Uninstall (One Command)
+npm uninstall -g claude-security-reviewer-v2
+```
+
+### 3. Local Installation & Uninstalling
 If you cloned the repo or ran `install.bat`:
 
 **To usage:**
