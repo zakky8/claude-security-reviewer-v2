@@ -28,7 +28,7 @@ This tool is built on **Claude Code**. You must have it installed:
 ### 2. Installation
 Run this one command to install and start the dashboard:
 ```powershell
-iex (irm https://raw.githubusercontent.com/zakky8/claude-code-security-review-v2/main/install.ps1)
+iex (irm https://raw.githubusercontent.com/zakky8/claude-code-security-reviewer-v2/main/install.ps1)
 ```
 
 **Verify with:**
