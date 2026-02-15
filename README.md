@@ -69,10 +69,13 @@ npx github:zakky8/claude-security-reviewer-v2
 If you installed locally or want to clean up:
 
 ```bash
-# Windows
+# If using NPX
+npx github:zakky8/claude-security-reviewer-v2 uninstall
+
+# If installed locally (Windows)
 .\uninstall.bat
 
-# Mac/Linux
+# If installed locally (Mac/Linux)
 ./uninstall.sh
 ```
 
