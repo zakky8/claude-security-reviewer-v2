@@ -56,6 +56,7 @@ export ANTHROPIC_API_KEY="sk-..."
 
 # 3. Run Server
 python server.py
+# Server starts at http://localhost:8089
 ```
 
 ### Option 3: NPX (Quick Test)
@@ -127,9 +128,5 @@ Detailed documentation is available in the repository:
 
 ---
 
-## 👥 Community
-Join the conversation and get support:
-- **[Claude Developers Discord](https://anthropic.com/discord)**
 
----
 **Build cool things. Stay secure.** 🚀
