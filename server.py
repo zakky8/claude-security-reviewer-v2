@@ -44,7 +44,7 @@ app.add_middleware(
 # SECURITY: Configure CORS properly
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8089", "http://127.0.0.1:8089"],
+    allow_origins=["http://localhost:8095", "http://127.0.0.1:8095"],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
