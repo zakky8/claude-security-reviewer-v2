@@ -9,10 +9,11 @@ __version__ = "1.0.0"
 __author__ = "Anthropic Security Team"
 
 # Import main components for easier access
-from claudecode.github_action_audit import (
+from .github_action_audit import (  # type: ignore
     GitHubActionClient,
     ClaudeCliRunner,
     LLMClientRunner,
+    ModernReporter,
     main
 )
 
@@ -20,5 +21,6 @@ __all__ = [
     "GitHubActionClient",
     "ClaudeCliRunner",
     "LLMClientRunner",
+    "ModernReporter",
     "main"
 ]

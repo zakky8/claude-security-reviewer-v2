@@ -189,8 +189,79 @@ class GitHubActionClient:
         return ''.join(filtered_sections)
 
 
-        return ''.join(filtered_sections)
+class ModernReporter:
+    """Provides premium, ANSI-styled terminal output for the audit tool."""
+    
+    # ANSI Color Codes
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    CYAN = "\033[96m"
+    BOLD = "\033[1m"
+    GRAY = "\033[90m"
+    RESET = "\033[0m"
+    
+    @classmethod
+    def print_splash(cls):
+        """Prints a premium startup banner."""
+        banner = f"""
+{cls.CYAN}{cls.BOLD}┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│   🛡️  {cls.WHITE}CLAUDE SECURITY REVIEWER v3.0{cls.CYAN}                     │
+│   {cls.GRAY}Enterprise Edition — Automated Security Guard{cls.CYAN}       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘{cls.RESET}
+"""
+        print(banner, file=sys.stderr)
 
+    @classmethod
+    def print_status(cls, category: str, message: str, color: Optional[str] = None):
+        """Prints a styled status message."""
+        color = color or cls.GRAY
+        print(f"{cls.BOLD}[{category.upper()}]{cls.RESET} {color}{message}{cls.RESET}", file=sys.stderr)
+
+    @classmethod
+    def print_findings_table(cls, findings: List[Dict[str, Any]]):
+        """Prints a clean, human-readable table of findings."""
+        if not findings:
+            print(f"\n{cls.GREEN}{cls.BOLD}✨ No security issues found. Build cool things!{cls.RESET}\n")
+            return
+
+        print(f"\n{cls.YELLOW}{cls.BOLD}⚠️  SECURITY FINDINGS FOUND:{cls.RESET}\n")
+        print(f"{cls.BOLD}{'SEVERITY':<10} {'FILE':<25} {'CATEGORY':<20} {'DESCRIPTION'}{cls.RESET}")
+        print(f"{cls.GRAY}{'─' * 80}{cls.RESET}")
+
+        for f in findings:
+            sev = f.get('severity', 'LOW').upper()
+            sev_color = cls.RED if sev == 'HIGH' or sev == 'CRITICAL' else (cls.YELLOW if sev == 'MEDIUM' else cls.CYAN)
+            
+            file = f.get('file', 'Unknown')
+            # Truncate long filenames
+            if len(file) > 22:
+                file = "..." + file[-19:]
+                
+            cat = f.get('category', 'security')
+            desc = f.get('description', 'Issue detected')
+            if len(desc) > 35:
+                desc = desc[:32] + "..."
+
+            print(f"{sev_color}{cls.BOLD}{sev:<10}{cls.RESET} {file:<25} {cat:<20} {desc}")
+        
+        print(f"{cls.GRAY}{'─' * 80}{cls.RESET}\n")
+
+    @classmethod
+    def print_verdict(cls, findings: List[Dict[str, Any]]):
+        """Prints the final verdict message."""
+        high_count = len([f for f in findings if f.get('severity', '').upper() in ['HIGH', 'CRITICAL']])
+        
+        if high_count > 0:
+            print(f"{cls.RED}{cls.BOLD}❌ VERDICT: ACTION REQUIRED ({high_count} HIGH SEVERITY ISSUES){cls.RESET}\n")
+        else:
+            print(f"{cls.GREEN}{cls.BOLD}✅ VERDICT: SECURE (All checks passed or low risk){cls.RESET}\n")
+
+    # Add missing WHITE
+    WHITE = "\033[97m"
 
 class AuditRunner:
     """Base class for security audit runners."""
@@ -631,9 +702,15 @@ def _is_finding_in_excluded_directory(finding: Dict[str, Any], github_client: Gi
 def main():
     """Main execution function for GitHub Action."""
     try:
+        # Check if we should use modern reporting
+        is_interactive = sys.stderr.isatty() or os.environ.get('FORCE_COLOR') == 'true'
+        
         # Get environment configuration
         try:
             repo_name, pr_number = get_environment_config()
+            if is_interactive:
+                ModernReporter.print_splash()
+                ModernReporter.print_status("CONFIG", f"Target: {repo_name} #{pr_number}")
         except ConfigurationError as e:
             print(json.dumps({'error': str(e)}))
             sys.exit(EXIT_CONFIGURATION_ERROR)
@@ -663,6 +740,8 @@ def main():
         # Initialize components
         try:
             github_client, claude_runner = initialize_clients()
+            if is_interactive:
+                ModernReporter.print_status("SYSTEM", "Guarding your code...")
         except ConfigurationError as e:
             print(json.dumps({'error': str(e)}))
             sys.exit(EXIT_CONFIGURATION_ERROR)
@@ -682,8 +761,12 @@ def main():
         
         # Get PR data
         try:
+            if is_interactive:
+                ModernReporter.print_status("SOURCE", "Fetching PR metadata and diff...")
             pr_data = github_client.get_pr_data(repo_name, pr_number)
             pr_diff = github_client.get_pr_diff(repo_name, pr_number)
+            if is_interactive:
+                ModernReporter.print_status("SOURCE", f"Loaded {len(pr_data.get('files', []))} files")
         except Exception as e:
             print(json.dumps({'error': f'Failed to fetch PR data: {str(e)}'}))
             sys.exit(EXIT_GENERAL_ERROR)
@@ -695,6 +778,8 @@ def main():
         # Get repo directory from environment or use current directory
         repo_path = os.environ.get('REPO_PATH')
         repo_dir = Path(repo_path) if repo_path else Path.cwd()
+        if is_interactive:
+            ModernReporter.print_status("ENGINE", "Running Hybrid Security Scan...")
         success, error_msg, results = claude_runner.run_security_audit(repo_dir, prompt)
         
         # If prompt is too long, retry without diff
@@ -742,6 +827,10 @@ def main():
         # Output JSON to stdout
         print(json.dumps(output, indent=2))
         
+        if is_interactive:
+            ModernReporter.print_findings_table(kept_findings)
+            ModernReporter.print_verdict(kept_findings)
+            
         # Exit with appropriate code
         high_severity_count = len([f for f in kept_findings if f.get('severity', '').upper() == 'HIGH'])
         sys.exit(EXIT_GENERAL_ERROR if high_severity_count > 0 else EXIT_SUCCESS)

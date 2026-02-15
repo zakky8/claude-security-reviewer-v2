@@ -114,6 +114,7 @@
                         <option value="openai">OpenAI (Default)</option>
                         <option value="anthropic">Anthropic (Claude)</option>
                         <option value="openrouter">OpenRouter / DeepSeek</option>
+                        <option value="baseten">Baseten (Kimi 2.5)</option>
                         <option value="custom">Local / Custom Endpoint</option>
                     </select>
                 </div>
@@ -128,6 +129,15 @@
                     <label class="block text-sm font-medium mb-1 text-gray-300">Model Name</label>
                     <input type="text" id="model" value="gpt-4o" placeholder="gpt-4o, claude-3-5-sonnet..."
                         class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Scan Mode</label>
+                    <select id="scanType"
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="security">🛡️ Security Audit (Default)</option>
+                        <option value="review">👀 General Code Review (Bugs & Style)</option>
+                    </select>
                 </div>
 
                 <div id="base_url_container" class="hidden">
@@ -267,7 +277,7 @@
     <script>
         // Toggle Base URL field based on provider
         document.getElementById('provider').addEventListener('change', function (e) {
-            const isCustom = e.target.value === 'custom' || e.target.value === 'openrouter';
+            const isCustom = e.target.value === 'custom' || e.target.value === 'openrouter' || e.target.value === 'baseten';
             document.getElementById('base_url_container').classList.toggle('hidden', !isCustom);
 
             const modelInput = document.getElementById('model');
@@ -276,6 +286,9 @@
             else if (e.target.value === 'openrouter') {
                 modelInput.value = 'deepseek/deepseek-r1';
                 document.getElementById('api_base').value = 'https://openrouter.ai/api/v1';
+            } else if (e.target.value === 'baseten') {
+                modelInput.value = 'moonshotai/Kimi-K2.5';
+                document.getElementById('api_base').value = 'https://inference.baseten.co/v1';
             }
         });
 
@@ -288,8 +301,7 @@
             if (isHidden) {
                 container.classList.remove('hidden');
                 document.getElementById('github_url').focus();
-                // Clear other inputs
-                clearFiles();
+                // We no longer clear other inputs here to support multi-source
             } else {
                 container.classList.add('hidden');
                 document.getElementById('github_url').value = "";
@@ -315,9 +327,6 @@
 
                 document.getElementById('file_name_text').textContent = name;
                 document.getElementById('file_name_display').classList.remove('hidden');
-                document.getElementById('code_input').disabled = true;
-                document.getElementById('code_input').placeholder = "Files selected. Clear to paste code manually.";
-                document.getElementById('code_input').value = "";
             }
         }
 
@@ -326,9 +335,6 @@
             document.getElementById('file_input').value = "";
             document.getElementById('folder_input').value = "";
             document.getElementById('file_name_display').classList.add('hidden');
-            document.getElementById('code_input').disabled = false;
-            document.getElementById('code_input').placeholder = "// Paste your Python, JS, Go, or any code here...";
-            document.getElementById('code_input').value = "";
         }
 
         async function scanCode() {
@@ -350,17 +356,20 @@
             formData.append('provider', document.getElementById('provider').value);
             formData.append('api_key', apiKey);
             formData.append('model', document.getElementById('model').value);
+            formData.append('scan_type', document.getElementById('scanType').value);
 
             const apiBase = document.getElementById('api_base').value;
             if (apiBase) formData.append('api_base', apiBase);
 
-            if (githubUrl) {
-                formData.append('github_url', githubUrl);
-            } else if (selectedFiles.length > 0) {
+            if (githubUrl) formData.append('github_url', githubUrl);
+
+            if (selectedFiles.length > 0) {
                 selectedFiles.forEach(file => {
                     formData.append('files', file);
                 });
-            } else {
+            }
+
+            if (code && code.trim()) {
                 formData.append('code_content', code);
                 formData.append('file_name', "snippet." + inferExtension(code));
             }
@@ -406,13 +415,38 @@
 
             const findings = data.findings || [];
 
+            // Check for partial error (LLM failure with Static Success)
+            if (data.error) {
+                const errorHtml = `
+                    <div class="mb-6 p-4 bg-yellow-900/30 border border-yellow-500 rounded-lg flex items-start gap-3 animate-pulse">
+                        <i class="fas fa-exclamation-triangle text-yellow-400 mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-yellow-400">Partial Analysis Warning</h3>
+                            <p class="text-sm text-yellow-200">${data.error}</p>
+                            <p class="text-xs text-yellow-400/70 mt-1">Showing static analysis results only.</p>
+                        </div>
+                    </div>`;
+                findingsList.innerHTML = errorHtml + findingsList.innerHTML;
+            } else {
+                // Success Indicator
+                const successHtml = `
+                    <div class="mb-6 p-3 bg-green-900/20 border border-green-500/50 rounded-lg flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-robot text-green-400"></i>
+                            <span class="text-green-300 font-medium text-sm">AI Analysis Complete</span>
+                        </div>
+                        <span class="text-xs text-green-500/70 font-mono">${document.getElementById('model').value}</span>
+                    </div>`;
+                findingsList.innerHTML = successHtml + findingsList.innerHTML;
+            }
+
             if (findings.length === 0) {
-                findingsList.innerHTML = `
+                findingsList.insertAdjacentHTML('beforeend', `
                     <div class="p-6 bg-[#0d1117] border border-green-900/50 rounded-lg text-center">
                         <i class="fas fa-check-circle text-4xl text-green-500 mb-2"></i>
                         <h3 class="text-xl font-bold text-green-400">No Vulnerabilities Found</h3>
                         <p class="text-gray-400">Your code looks secure based on this analysis.</p>
-                    </div>`;
+                    </div>`);
             } else {
                 findings.forEach(f => {
                     const sevClass = `severity-${f.severity.toUpperCase()}`;

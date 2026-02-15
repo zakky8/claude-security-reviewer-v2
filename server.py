@@ -22,6 +22,7 @@ from claudecode.github_action_audit import ( # type: ignore
     parse_json_with_fallbacks
 )
 from claudecode import claude_api_client # type: ignore
+from api.static_analysis import run_static_analysis
 
 app = FastAPI()
 
@@ -35,6 +36,7 @@ class ScanRequest(BaseModel):
     provider: str = "openai"
     api_key: str
     model: str = "gpt-4o"
+    scan_type: str = "security" # security or review
     api_base: Optional[str] = None
 
 @app.get("/", response_class=HTMLResponse)
@@ -51,6 +53,7 @@ async def scan_code(
     provider: str = Form("openai"),
     api_key: str = Form(...),
     model: str = Form("gpt-4o"),
+    scan_type: str = Form("security"),
     api_base: Optional[str] = Form(None)
 ):
     print(f"DEBUG: Request - Files: {len(files) if files else 0}, Code: {bool(code_content)}, GitHub: {github_url}")
@@ -71,39 +74,44 @@ async def scan_code(
             DATA_EXTS = {'.json', '.yaml', '.yml', '.toml', '.env', '.dockerfile', '.sql'}
             VALID_EXTS = CORE_EXTS.union(DATA_EXTS)
 
-            if has_files or github_url:
-                candidates = []
+            candidates = []
+            source_errors = []
+
+            # 1. Collect from Uploaded Files
+            if has_files:
+                for file in files:
+                    if not file.filename: continue
+                    if Path(file.filename).suffix.lower() in VALID_EXTS:
+                         content_bytes = await file.read()
+                         c = content_bytes.decode('utf-8', errors='ignore')
+                         if c.strip(): candidates.append({"name": file.filename, "content": c})
+
+            # 2. Collect from GitHub
+            if github_url:
                 extract_path = temp_path / "extracted"
                 os.makedirs(extract_path, exist_ok=True)
-
-                if github_url:
-                    # Clean GitHub URL (handle tree/blob links)
-                    if 'github.com' in github_url:
-                        parts = github_url.split('/')
-                        if 'tree' in parts or 'blob' in parts:
-                             # Reconstruct URL part by part to avoid slicing concerns
-                             github_url = f"{parts[0]}//{parts[2]}/{parts[3]}/{parts[4]}"
-                    
-                    print(f"DEBUG: Cloning {github_url} into {extract_path}")
-                    try:
-                        subprocess.run(["git", "clone", "--depth", "1", github_url, str(extract_path)], 
-                                       check=True, timeout=60, capture_output=True)
-                    except Exception as e:
-                        return JSONResponse(status_code=400, content={"error": f"Git clone failed: {str(e)}"})
-                    
-                elif len(files) == 1 and files[0].filename.endswith('.zip'):
-                    content_bytes = await files[0].read()
-                    zip_path = temp_path / "upload.zip"
-                    with open(zip_path, "wb") as f: f.write(content_bytes)
-                    with zipfile.ZipFile(zip_path, 'r') as zip_ref: zip_ref.extractall(extract_path)
                 
-                # TRAVERSAL
-                if github_url or (len(files) == 1 and files[0].filename.endswith('.zip')):
+                # Clean GitHub URL (handle tree/blob links)
+                clean_url = github_url.strip().rstrip('/')
+                if 'github.com' in clean_url:
+                    parts = clean_url.split('/')
+                    # parts might be ['https:', '', 'github.com', 'owner', 'repo', ...]
+                    if len(parts) < 5:
+                         return JSONResponse(status_code=400, content={"error": f"Invalid GitHub URL: '{github_url}'. Please provide a specific repository, not just an organization. Example: 'https://github.com/anthropics/anthropic-sdk-python'"})
+                    
+                    if 'tree' in parts or 'blob' in parts:
+                        clean_url = f"{parts[0]}//{parts[2]}/{parts[3]}/{parts[4]}"
+                    else:
+                        clean_url = f"{parts[0]}//{parts[2]}/{parts[3]}/{parts[4]}"
+                
+                print(f"DEBUG: Attempting to clone {clean_url} into {extract_path}")
+                try:
+                    subprocess.run(["git", "clone", "--depth", "1", clean_url, str(extract_path)], 
+                                   check=True, timeout=60, capture_output=True)
+                    
                     for root, dirs, fs in os.walk(extract_path):
-                        # Filter directories in-place to control recursion
                         valid_dirs = [d for d in dirs if not d.startswith('.') and d not in ['test', 'tests', 'node_modules', 'venv', 'env', '__pycache__', '.git', 'docs', 'assets']]
-                        dirs.clear()
-                        dirs.extend(valid_dirs)
+                        dirs.clear(); dirs.extend(valid_dirs)
                         for f in fs:
                             p = Path(root) / f
                             if p.suffix.lower() in VALID_EXTS:
@@ -113,106 +121,98 @@ async def scan_code(
                                         c = code_file.read()
                                         if c.strip(): candidates.append({"name": str(rel_path), "content": c})
                                 except Exception: continue
-                else:
-                    for file in files:
-                        if not file.filename: continue
-                        if Path(file.filename).suffix.lower() in VALID_EXTS:
-                             content_bytes = await file.read()
-                             c = content_bytes.decode('utf-8', errors='ignore')
-                             if c.strip(): candidates.append({"name": file.filename, "content": c})
+                except Exception as e:
+                    source_errors.append(f"GitHub Clone Failed: {str(e)}")
 
-                # PRIORITIZE
-                def get_score(f):
-                    n = f['name'].lower()
-                    score = 1
-                    if any(x in n for x in ['auth', 'login', 'security', 'password', 'secret', 'key', 'token']): score += 20
-                    if any(x in n for x in ['api', 'route', 'controller', 'handler', 'server', 'db', 'database', 'query']): score += 15
-                    if any(x in n for x in ['main', 'app', 'config', 'settings', 'env']): score += 10
-                    if Path(n).suffix in CORE_EXTS: score += 5
-                    return score
+            # 3. Collect from Paste
+            if code_content and code_content.strip():
+                candidates.append({"name": file_name or "snippet.py", "content": code_content})
 
-                candidates.sort(key=get_score, reverse=True)
-                print(f"DEBUG: Found {len(candidates)} files. Top file: {candidates[0]['name'] if candidates else 'NONE'}")
+            if not candidates:
+                error_msg = "No valid source code found."
+                if source_errors:
+                    error_msg += " " + ". ".join(source_errors)
+                return JSONResponse(status_code=400, content={"error": error_msg})
 
-                # DYNAMIC PACKING & RESPONSE LIMITS
-                model_lower = model.lower()
-                is_large_model = any(x in model_lower for x in ['claude', 'gpt-4', 'o1'])
-                limit = 200000 if is_large_model else 15000
-                safe_max_tokens = 4096 if is_large_model else 1024
-                
-                packing_limit = 200000 if is_large_model else 15000
-                aggregated: List[str] = []
-                bytes_accumulated: int = 0
-                
-                # Content truncation threshold
-                item_limit = 15000 if is_large_model else 5000
-                
-                for cand in candidates:
-                    # Content processing
-                    raw_text = str(cand['content'])
-                    if len(raw_text) > item_limit:
-                        # Manual character collection to avoid slicing syntax
-                        chars = []
-                        c_list = list(raw_text)
-                        for i in range(item_limit):
-                            if i < len(c_list):
-                                chars.append(c_list[i]) # type: ignore
-                        content = "".join(chars) + "\n... [TRUNCATED]"
-                    else:
-                        content = raw_text
-                    
-                    entry = f"File: {cand['name']}\n```\n{content}\n```\n"
-                    entry_len = len(entry)
-                    
-                    # Linter false positive: incorrectly flags integer addition as unsupported
-                    if (bytes_accumulated + entry_len) > packing_limit: # type: ignore
-                        break
-                        
-                    aggregated.append(entry)
-                    bytes_accumulated = bytes_accumulated + entry_len # type: ignore
+            # RUN STATIC ANALYSIS
+            static_findings = []
+            for cand in candidates:
+                static_findings.extend(run_static_analysis(cand['name'], cand['content']))
 
-                if not aggregated:
-                    return JSONResponse(status_code=400, content={"error": "No valid source code found."})
+            # PRIORITIZE & PACK
+            def get_score(f):
+                n = f['name'].lower()
+                score = 1
+                if any(x in n for x in ['auth', 'login', 'security', 'password', 'secret', 'key', 'token']): score += 20
+                if any(x in n for x in ['api', 'route', 'controller', 'handler', 'server', 'db', 'database', 'query']): score += 15
+                if any(x in n for x in ['main', 'app', 'config', 'settings', 'env']): score += 10
+                if Path(n).suffix in CORE_EXTS: score += 5
+                return score
+
+            candidates.sort(key=get_score, reverse=True)
             
-                context = "\n".join(aggregated)
-                prompt = f"""You are a senior security engineer. Analyze these {len(aggregated)} files for security vulnerabilities.
-Focus on: SQLi, XSS, Auth Bypass, RCE, and Secrets.
+            # DYNAMIC PACKING
+            model_lower = model.lower()
+            is_large_model = any(x in model_lower for x in ['claude', 'gpt-4', 'o1'])
+            packing_limit = 200000 if is_large_model else 15000
+            item_limit = 15000 if is_large_model else 5000
+            
+            aggregated: List[str] = []
+            bytes_accumulated: int = 0
+            
+            for cand in candidates:
+                raw_text = str(cand['content'])
+                limit_int = int(item_limit)
+                content = raw_text if len(raw_text) <= limit_int else raw_text[:limit_int] + "\n... [TRUNCATED]" # type: ignore
+                entry = f"File: {cand['name']}\n```\n{content}\n```\n"
+                entry_len = len(entry)
+                if (int(bytes_accumulated) + entry_len) > int(packing_limit): # type: ignore
+                    break
+                aggregated.append(entry)
+                bytes_accumulated = int(bytes_accumulated) + entry_len # type: ignore
 
+            context = "\n".join(aggregated)
+            scan_type_str = scan_type # Use the Form variable
+            
+            if scan_type_str == "review":
+                prompt = f"""You are a senior softare engineer performing a code review.
+Review these {len(aggregated)} files for bugs, style, and best practices.
 Files:
 {context}
-
-Return ONLY a JSON object:
-{{
-  "findings": [
-    {{
-      "title": "Title",
-      "severity": "HIGH|MEDIUM|LOW",
-      "description": "...",
-      "file": "path",
-      "line": 1,
-      "exploit_scenario": "...",
-      "recommendation": "..."
-    }}
-  ],
-  "analysis_summary": {{ "files_reviewed": {len(aggregated)}, "high_severity": 0, "medium_severity": 0, "low_severity": 0 }}
-}}
-"""
+Return ONLY a JSON object with "findings" and "analysis_summary" keys."""
             else:
-                prompt = f"""Analyze this code ({file_name}) for security vulnerabilities.
-Code:
-```
-{code_content}
-```
-Return JSON matching the schema previously described.
-"""
-                safe_max_tokens = 4096 if any(x in model.lower() for x in ['claude', 'gpt-4', 'o1']) else 1024
+                prompt = f"""You are a senior security engineer. Analyze these {len(aggregated)} files for security vulnerabilities.
+Files:
+{context}
+Return ONLY a JSON object with "findings" and "analysis_summary" keys."""
 
-            # EXECUTE
+            safe_max_tokens = 4096 if is_large_model else 1024
+
+            # EXECUTE LLM
             client = get_llm_client(provider='openai' if provider=='openrouter' else provider, 
                                     api_key=api_key, model=model, api_base=api_base)
             success, error, results = LLMClientRunner(client).run_security_audit(temp_path, prompt, max_tokens=safe_max_tokens)
             
-            if not success: return JSONResponse(status_code=500, content={"error": f"Audit Failed: {error}"})
+            if not success:
+                # Fallback to static results
+                files_count = len(aggregated)
+                return {
+                    "findings": static_findings,
+                    "analysis_summary": {
+                        "files_reviewed": files_count,
+                        "high_severity": sum(1 for f in static_findings if f['severity'] in ['CRITICAL', 'HIGH']),
+                        "medium_severity": sum(1 for f in static_findings if f['severity'] == 'MEDIUM'),
+                        "low_severity": sum(1 for f in static_findings if f['severity'] == 'LOW'),
+                    },
+                    "error": f"LLM Analysis Failed: {error}. Showing Static Analysis results only."
+                }
+            
+            # MERGE RESULTS
+            results["findings"] = static_findings + results.get("findings", [])
+            # Also include any source errors as metadata
+            if source_errors:
+                results["error"] = "Note: Some sources failed to load. " + ". ".join(source_errors)
+            
             return results
 
     except Exception as e:
@@ -220,4 +220,19 @@ Return JSON matching the schema previously described.
 
 if __name__ == "__main__":
     import uvicorn # type: ignore
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    BANNER = """
+    \033[36m██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+    ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+    ██║     ██║     ███████║██║   ██║██║  ██║█████╗  
+    ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  
+    ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝\033[0m
+    \033[35mSECURITY REVIEWER v3.0\033[0m | \033[32mHybrid Analysis Engine\033[0m
+    --------------------------------------------------
+    \033[33m⚡ Initializing Multi-Agent Context...
+    🚀 System Ready: http://localhost:8089\033[0m
+    --------------------------------------------------
+    """
+    print(BANNER)
+    uvicorn.run(app, host="0.0.0.0", port=8089, log_level="info")

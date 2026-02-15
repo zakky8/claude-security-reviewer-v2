@@ -52,7 +52,7 @@ class BaseLLMClient(ABC):
                  api_base: Optional[str] = None,
                  timeout_seconds: Optional[int] = None,
                  max_retries: Optional[int] = None,
-                 circuit_breaker_threshold: int = 3):
+                 circuit_breaker_threshold: int = 10):
         self.model = model
         self.api_key = api_key
         self.api_base = api_base
@@ -308,6 +308,10 @@ class OpenAIClient(BaseLLMClient):
         client_args: Dict[str, Any] = {"api_key": self.api_key}
         if self.api_base:
             client_args["base_url"] = self.api_base
+            # Support Baseten's 'Api-Key' authentication scheme
+            if self.api_base and "baseten.co" in str(self.api_base):
+                logger.info("Using Baseten-style Api-Key authentication")
+                client_args["default_headers"] = {"Authorization": f"Api-Key {self.api_key}"}
             
         self.client = OpenAI(**client_args)
 
@@ -362,7 +366,7 @@ def get_llm_client(provider: str = 'anthropic',
     """Factory to get the appropriate LLM client."""
     provider = provider.lower()
     
-    if provider == 'openai' or provider == 'custom':
+    if provider == 'openai' or provider == 'custom' or provider == 'baseten':
         return OpenAIClient(model=model, api_key=api_key, api_base=api_base, timeout_seconds=timeout_seconds)
     else:
         # Default to Claude/Anthropic

@@ -1,0 +1,30 @@
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="400" rx="12" fill="#0D1117" />
+  <rect width="600" height="30" rx="12" fill="#161B22" />
+  <circle cx="20" cy="15" r="4" fill="#FF5F56" />
+  <circle cx="35" cy="15" r="4" fill="#FFBD2E" />
+  <circle cx="50" cy="15" r="4" fill="#27C93F" />
+  <text x="300" y="20" font-family="JetBrains Mono, monospace" font-size="12" fill="#8B949E" text-anchor="middle">Claude Security Reviewer — Terminal</text>
+  
+  <g font-family="JetBrains Mono, monospace" font-size="13">
+    <text x="25" y="70" fill="#27C93F">$ npx claude-security-cli scan ./src</text>
+    
+    <text x="25" y="110" fill="#58A6FF">┌─────────────────────────────────────────────────────────┐</text>
+    <text x="25" y="125" fill="#58A6FF">│                                                         │</text>
+    <text x="25" y="140" fill="#58A6FF">│   🛡️  CLAUDE SECURITY REVIEWER v3.0                     │</text>
+    <text x="25" y="155" fill="#58A6FF">│                                                         │</text>
+    <text x="25" y="170" fill="#58A6FF">└─────────────────────────────────────────────────────────┘</text>
+    
+    <text x="25" y="200" fill="#8B949E">[SYSTEM] Guarding your code...</text>
+    <text x="25" y="220" fill="#8B949E">[SOURCE] Analyzing 12 files in ./src</text>
+    <text x="25" y="240" fill="#27C93F">[ENGINE] Tier 1 Static Scan: COMPLETE (3 findings)</text>
+    <text x="25" y="260" fill="#27C93F">[ENGINE] Tier 2 AI Review: COMPLETE (1 findings)</text>
+    
+    <text x="25" y="290" fill="#D29922">───────────────────────────────────────────────────────────</text>
+    <text x="25" y="310" fill="#FF7B72">CRITICAL: SQL Injection vulnerability in auth_v3.py:L42</text>
+    <text x="25" y="330" fill="#D29922">WARNING: Hardcoded API secret in config.py:L12</text>
+    <text x="25" y="350" fill="#D29922">───────────────────────────────────────────────────────────</text>
+    
+    <text x="25" y="380" fill="#3FB950">VERDICT: ACTION REQUIRED (1 Critical, 1 Warning)</text>
+  </g>
+</svg>

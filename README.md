@@ -1,227 +1,103 @@
-# 🕵️ Claude Code Security Reviewer v2.0
+# 🛡️ CLAUDE SECURITY REVIEWER v3.0
+> **Enterprise-Grade AI-Powered Security Guard**
 
-**Claude Code Security Reviewer** is an elite, AI-powered security analysis engine that transforms Claude into a **Senior Security Engineer**. Designed for developers, security teams, and **Autonomous AI Agents**, it identifies critical vulnerabilities in your codebase before they reach production.
+A lightweight and powerful **Hybrid Security Analysis System** that extends **Claude Code** for professional-grade repository protection. Audit your code for vulnerabilities with the speed of static analysis and the depth of an agentic AI expert.
 
-Powered by **Claude 3.5 Sonnet**, it audits local code, ZIP uploads, and entire **GitHub Repositories** with high precision, providing detailed findings that include real-world **Exploit Scenarios** and **Confidence Scores**.
-
----
-
-## 🌟 Key Updates in v2.0
-
-- **🚀 Direct GitHub Scanning**: Paste any GitHub URL (or sub-links like `/tree/` or `/blob/`) to perform a comprehensive repo-wide security audit.
-- **🧠 Smart Context Prioritization**: Intelligent scoring system that identifies and prioritizes security-critical files (`auth`, `api`, `config`, `crypto`) to ensure the most vulnerable logic is always analyzed first.
-- **📊 Advanced Finding Schema**: Reports now include **Confidence Scores**, **Exploit Scenarios** (how an attacker would use the flaw), and structured **Categories**.
-- **⚡ Dynamic Context Packing**: 
-  - **Power Users**: Up to **200,000 characters** per scan for Claude 3.5 Sonnet / GPT-4o.
-  - **Safe Mode**: Automatic fallback for smaller models (Nemotron/Llama) with individual file truncation to prevent "Context Window" errors.
+![Terminal Demo](assets/terminal_demo.svg)
 
 ---
 
-## 🖥️ Local Web Interface
+## 💡 Why I Built This
 
-Experience a premium, dark-themed security dashboard with glassmorphism aesthetics.
+> "I'm a solo developer. I move fast, I 'vibecode,' and I trust AI to write my logic. But I also know that one simple mistake — an unescaped `eval` or a leaked API key — can ruin everything."
 
-### Quick Start (Web)
-1. **Install Dependencies**:
-   ```bash
-   pip install fastapi uvicorn jinja2 python-multipart openai anthropic
-   ```
-2. **Launch Server**:
-   ```bash
-   python server.py
-   ```
-3. **Audit**: Open `http://localhost:8000`. Choose your provider (Anthropic, OpenAI, or OpenRouter), paste a GitHub link, or upload your ZIP/folders.
+Standard security tools are built for 500-person enterprise companies. They are slow, full of false positives, and frankly, boring to use. I wanted something that felt like **Claude Code**: fast, smart, and designed for the creative developer who just wants to "Get Shit Done" without getting hacked.
 
-### Features
-- **Real-time Progress**: Visual loader and status indicators.
-- **Vulnerability Cards**: Detailed breakdown with exploit scenarios and code context.
-- **Risk Summary**: High/Medium/Low dashboard overview.
-- **Responsive Design**: Audits from your phone or desktop.
+So I built this. A system that doesn't just look for generic patterns, but actually *understands* the context of your code using agentic reasoning.
+— **ZAKKY8**
 
 ---
 
-## 🛡️ Security Analysis Methodology
+## 🚀 Getting Started
 
-The tool uses a multi-phased analysis approach inspired by professional penetration testing:
+### 1. Prerequisites
+This tool is built on **Claude Code**. You must have it installed:
+- **Windows**: `irm https://claude.ai/install.ps1 | iex`
+- **MacOS/Linux**: `curl -fsSL https://claude.ai/install.sh | bash`
 
-1. **Contextual Research**: Analyzes the structural architecture of the code.
-2. **Vulnerability Assessment**: Cross-references code against common attack vectors (OWASP Top 10).
-3. **Exploit Verification**: Simulates how an attacker might leverage the vulnerability to ensure findings are actionable and high-confidence.
-
-### Coverage
-- **Injection**: SQLi, NoSQLi, Command Injection, SSRF.
-- **Auth & Authz**: Broken Access Control, JWT flaws, Session fixation.
-- **Crypto**: Weak algorithms, hardcoded secrets, insecure entropy.
-- **Business Logic**: Input validation bypasses, race conditions.
-
----
-
-## 🐙 GitHub Action Integration
-
-Seamlessly integrate security reviews into your CI/CD pipeline.
-
-### Use it in your PRs
-Add this to `.github/workflows/security.yml`:
-
-```yaml
-on: [pull_request]
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: your-username/claude-security-v2@main
-        with:
-          api-provider: 'anthropic' # or 'openai', 'openrouter'
-          api-key: ${{ secrets.CLAUDE_API_KEY }}
-          model-name: 'claude-3-5-sonnet-20241022'
-```
-
----
-
----
-
-### ⚡ One-Click Installation (For Users & Agents)
-Use these commands to fully automate the setup. **AI Agents** can run these to "equip" themselves with the security analysis subsystem in seconds.
-
-**Linux / macOS / WSL / Cloud Agents**:
-```bash
-curl -sSL https://raw.githubusercontent.com/your-username/repo/main/install.sh | bash
-```
-
-**Windows / Local Agents**:
+### 2. Installation
+Run this one command to install and start the dashboard:
 ```powershell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/your-username/repo/main/install.bat" -OutFile "install.bat"; .\install.bat
+iex (irm https://raw.githubusercontent.com/zakky8/claude-code-security-review-v2/main/install.ps1)
+```
+
+**Verify with:**
+Open your browser to [http://localhost:8089](http://localhost:8089)
+
+---
+
+## 🛠️ How It Works
+
+1.  **Initialize**: Select your provider (Claude, OpenAI, or DeepSeek) and enter your API key.
+2.  **Multi-Source Feed**: Paste a snippet, upload a whole folder, or drop a GitHub link. The system consumes them all simultaneously.
+3.  **Hybrid Scan**: The engine runs two layers of defense:
+    *   **Tier 1: Static Layer**: Instant regex-based detection of dangerous hooks (RCE, Injection).
+    *   **Tier 2: AI Layer**: Deep semantic reasoning to find logical flaws and architectural risks using **Claude 3.5 Sonnet**.
+4.  **Results & Remediation**: Get a prioritized list of findings with severity ratings and specific recommendations on how to fix them.
+
+---
+
+## 🔥 v3.0 Enterprise Features
+
+- **Hybrid Intelligence**: Combining fixed security rules with LLM reasoning for **Zero False Negatives**.
+- **Modern Terminal (NEW)**: A premium CLI experience with splash screens, status indicators, and beautiful findings tables. 
+- **GitHub Action Integration**: Automatically audit every Pull Request.
+- **Circuit-Breaker Resilience**: Gracefully degrades to **Static-Only Scan** if API limits are hit.
+- **Privacy First**: Local processing in isolated directories. No code is stored.
+
+---
+
+## 💻 Usage Modes
+
+### 🌐 Web Dashboard
+Access the full visual experience at `http://localhost:8089`.
+
+### 📟 CLI (Modern Terminal)
+Run the audit directly from your terminal:
+```powershell
+python claudecode/github_action_audit.py
+```
+*Note: Detection is automatic. In interactive terminals, it shows the styled experience; in CI, it outputs structured JSON.*
+
+### 🧪 SAST Evaluator
+Evaluate specific PRs for accuracy:
+```powershell
+python -m claudecode.evals.run_eval owner/repo#123 --verbose
 ```
 
 ---
 
-## 🛠️ Installation & Platform Support
-
-This tool can be installed and run anywhere Python is available. Use the guide below for your specific environment.
-
-### 1. Base Installation (Required for All)
-First, get the code and dependencies onto your system:
-```bash
-# Get the code
-git clone https://github.com/your-username/claude-security-v2.git
-cd claude-security-v2
-
-# Install Core & Web dependencies
-pip install -r claudecode/requirements.txt
+## 🤖 GitHub Action Integration
+Add this tool to your CI pipeline:
+```yaml
+- name: Claude Security Review
+  uses: zakky8/claude-code-security-review-v2@v3
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ---
 
-### 2. Choose Your Mode
-Once installed, choose how you want to use the tool:
-
-| Platform / Mode | How to Run / Install |
-|:--- |:--- |
-| **Local Web UI** | Run `python server.py` and open `localhost:8000` |
-| **Autonomous Agent** | Point your agent to `claudecode/github_action_audit.py` or use the API |
-| **Docker / Cloud** | Use `docker-compose up -d` (Includes auto-restarts) |
-| **GitHub Actions** | Add the repository to your `.github/workflows/security.yml` |
-| **VPS (Ubuntu/etc)** | Use `pm2 start server.py` to keep it running 24/7 |
+## 🛡️ Security & Privacy
+*   **Isolated Processing**: Files are processed in temporary worktrees and wiped immediately.
+*   **No Data Retention**: Your code is sent only to your chosen providers for analysis. We do not store or train on your data.
 
 ---
 
-### 3. API & Agentic Setup (OpenClaw / Antigravity)
-Agents can either import the logic directly or talk to the local API.
-
-**To run as an Agentic Tool:**
-1. Start the subsystem: `python server.py &`
-2. Configure your agent to call `POST http://localhost:8000/api/scan` with the code/URL.
-3. The agent receives structured JSON to auto-fix vulnerabilities.
+## 👥 Community
+Join the conversation and get support:
+- **[Claude Developers Discord](https://anthropic.com/discord)**
 
 ---
-
-### 5. Docker Deployment (Cloud & VPS)
-Recommended for **DigitalOcean, AWS, or Heroku**:
-
-1. **Build the Image**:
-   ```bash
-   docker build -t claude-security .
-   ```
-
-2. **Run with Docker Compose**:
-   ```bash
-   docker-compose up -d
-   ```
-   *The app will automatically restart if the server reboots.*
-
----
-
-### 6. VPS Deployment (Direct)
-If you are using a Linux VPS (Ubuntu/Debian):
-
-1. **Install PM2** (Process Manager):
-   ```bash
-   npm install -g pm2
-   ```
-
-2. **Start the App**:
-   ```bash
-   pm2 start server.py --name "security-audit" --interpreter python3
-   pm2 save
-   pm2 startup
-   ```
-
----
-
-### 7. Cloud Platform One-Click (Railway / Render / Fly.io)
-Since this project includes a `Dockerfile`, you can simply:
-1. Fork this repository.
-2. Connect your repository to **Railway.app** or **Render.com**.
-3. It will automatically detect the Dockerfile, build it, and provide a public URL.
-
----
-
-### 8. Agentic AI & Integration (OpenClaw / AutoGPT / Antigravity)
-Autonomous agents can use this tool in two ways depending on their architecture:
-
-#### A. Local API Pattern (Subsystem)
-The agent runs the server (`python server.py`) and uses it as a private security API on `localhost:8000`. This is ideal for agents that prefer communicating via HTTP/JSON.
-
-#### B. Direct Python Pattern (No Server)
-If the agent is Python-based, it can import the audit logic directly without running any background process:
-```python
-from claudecode.github_action_audit import LLMClientRunner
-from claudecode.claude_api_client import get_llm_client
-
-# Agent initializes the engine
-client = get_llm_client(provider='openai', api_key='...', model='gpt-4o')
-runner = LLMClientRunner(client)
-
-# Agent runs audit natively
-success, error, findings = runner.run_security_audit(Path("./code_to_scan"), prompt)
-```
-
-**Cloud Agents**: For agents running in the cloud, use the **Docker** or **One-Click Cloud** methods (Section 5 & 7) to host a remote security endpoint.
-
----
-
-## ⚙️ Configuration (Web & CLI)
-
-| Feature | Description |
-|---------|-------------|
-| **Smart Selection** | Automatically ignores `.git`, `node_modules`, `tests`, and `assets` to save context. |
-| **Model Fallbacks** | Automatically detects context window limits for 4k, 8k, and 128k+ token models. |
-| **File Logic** | Prioritizes `.py, .js, .go, .rs, .java` over documentation and text files. |
-
----
-
-## 🚀 Hosting your own Dashboard
-
-The web interface (`server.py`) is built with **FastAPI**. You can deploy it as a private security tool for your team:
-
-1. **Self-Host**: Deploy to any VPS or internal server.
-2. **OpenRouter Integration**: Use the OpenAI provider type with base URL `https://openrouter.ai/api/v1` to access **Llama 3**, **Grok**, or **DeepSeek**.
-
----
-
-## 📝 License
-MIT License. Created with ❤️ by the Advanced Agentic Coding team.
-
----
-*Note: This tool is designed for security professionals. Always verify findings manually before deployment.*
+**Build cool things. Stay secure.** 🚀
