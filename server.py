@@ -1,6 +1,6 @@
 
 from fastapi import FastAPI, Request, File, UploadFile, Form # type: ignore
-from fastapi.responses import HTMLResponse, JSONResponse # type: ignore
+from fastapi.responses import HTMLResponse, JSONResponse, Response # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
 from fastapi.middleware.trustedhost import TrustedHostMiddleware # type: ignore
 from fastapi.templating import Jinja2Templates # type: ignore
@@ -58,6 +58,10 @@ class ScanRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(content='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🛡️</text></svg>', media_type="image/svg+xml")
 
 @app.post("/api/scan")
 async def scan_code(
