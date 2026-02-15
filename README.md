@@ -24,14 +24,21 @@ So I built this. A system that doesn't just look for generic patterns, but actua
 Run this from any terminal on any machine:
 ```powershell
 npx github:zakky8/claude-security-reviewer-v2
-npx github:zakky8/claude-security-reviewer-v2
 ```
 
 **Verify arrival:**
 Open your browser to [http://localhost:8089](http://localhost:8089)
 
-### 2. Uninstalling
-To remove the local environment (venv) and cache files:
+### 2. Local Installation & Uninstalling
+If you cloned the repo or ran `install.bat`:
+
+**To usage:**
+```powershell
+venv\Scripts\activate
+python server.py
+```
+
+**To uninstall (cleanup venv & cache):**
 ```powershell
 # Windows
 .\uninstall.bat
@@ -63,7 +70,7 @@ To remove the local environment (venv) and cache files:
 ## 🤖 GitHub Action
 ```yaml
 - name: Claude Security Review
-  uses: zakky8/claude-code-security-reviewer-v2@v3
+  uses: zakky8/claude-security-reviewer-v2@v3
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
