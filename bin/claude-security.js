@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+console.log('--- JS ENTRY POINT STARTED ---');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
