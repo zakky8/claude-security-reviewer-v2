@@ -10,6 +10,8 @@ __pycache__/
 # Output files
 *.csv
 *.json
+!package.json
+!package-lock.json
 security_report.*
 
 # Virtual environments
