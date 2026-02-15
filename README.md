@@ -24,10 +24,21 @@ So I built this. A system that doesn't just look for generic patterns, but actua
 Run this from any terminal on any machine:
 ```powershell
 npx github:zakky8/claude-security-reviewer-v2
+npx github:zakky8/claude-security-reviewer-v2
 ```
 
 **Verify arrival:**
 Open your browser to [http://localhost:8089](http://localhost:8089)
+
+### 2. Uninstalling
+To remove the local environment (venv) and cache files:
+```powershell
+# Windows
+.\uninstall.bat
+
+# Mac/Linux
+./uninstall.sh
+```
 
 ---
 

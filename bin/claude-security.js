@@ -13,6 +13,24 @@ console.log('└─────────────────────�
 
 const serverPath = path.join(__dirname, '..', 'server.py');
 
+// Handle Uninstall Command
+if (process.argv.includes('uninstall')) {
+    console.log('🗑️  Initiating uninstallation...');
+    const uninstallScript = process.platform === 'win32' ? 'uninstall.bat' : './uninstall.sh';
+    const uninstallPath = path.join(__dirname, '..', uninstallScript);
+
+    const child = spawn(uninstallPath, [], {
+        stdio: 'inherit',
+        shell: true,
+        cwd: path.join(__dirname, '..')
+    });
+
+    child.on('exit', (code) => {
+        process.exit(code);
+    });
+    return;
+}
+
 // Debug: Verify file exists
 if (!fs.existsSync(serverPath)) {
     console.error('\x1b[91m❌ Error: server.py not found at:\x1b[0m', serverPath);
