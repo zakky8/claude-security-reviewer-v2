@@ -22,7 +22,7 @@ if (process.argv.includes('uninstall')) {
     const child = spawn(uninstallPath, [], {
         stdio: 'inherit',
         shell: true,
-        cwd: path.join(__dirname, '..')
+        cwd: process.cwd()
     });
 
     child.on('exit', (code) => {
