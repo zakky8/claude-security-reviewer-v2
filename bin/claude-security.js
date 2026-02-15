@@ -42,8 +42,7 @@ const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
 console.log(`\x1b[90mStarting Python server via: ${pythonCmd}...\x1b[0m`);
 
 const python = spawn(pythonCmd, [serverPath], {
-    stdio: 'inherit',
-    shell: true
+    stdio: 'inherit'
 });
 
 python.on('error', (err) => {

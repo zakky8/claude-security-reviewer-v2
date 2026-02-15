@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Request, File, UploadFile, Form # type: ignore
 from fastapi.responses import HTMLResponse, JSONResponse # type: ignore
 from fastapi.staticfiles import StaticFiles # type: ignore
+from fastapi.middleware.trustedhost import TrustedHostMiddleware # type: ignore
 from fastapi.templating import Jinja2Templates # type: ignore
 import os
 import tempfile
@@ -25,6 +26,12 @@ from claudecode import claude_api_client # type: ignore
 from api.static_analysis import run_static_analysis
 
 app = FastAPI()
+
+# SECURITY: Only allow access from localhost
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["localhost", "127.0.0.1", "::1"]
+)
 
 # Mount static files
 # Mount static files
@@ -244,4 +251,4 @@ if __name__ == "__main__":
     --------------------------------------------------
     """
     print(BANNER)
-    uvicorn.run(app, host="0.0.0.0", port=8089, log_level="info")
+    uvicorn.run(app, host="127.0.0.1", port=8089, log_level="info")
