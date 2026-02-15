@@ -32,14 +32,14 @@ export API_TOKEN=$(openssl rand -hex 32)
 $env:API_TOKEN = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | % {[char]$_})
 
 # 4. Run the container
-docker run -d -p 8089:8089 \
+docker run -d -p 8095:8095 \
   -e HOST=0.0.0.0 \
   -e API_TOKEN=$API_TOKEN \
   -e ANTHROPIC_API_KEY=sk-... \
   claude-security:2.1.0
 ```
 
-> **Note:** The server now runs on port **8089** by default inside the container.
+> **Note:** The server now runs on port **8095** by default inside the container.
 
 ### Option 2: Local Python
 For development or environments without Docker.
@@ -56,7 +56,7 @@ export ANTHROPIC_API_KEY="sk-..."
 
 # 3. Run Server
 python server.py
-# Server starts at http://localhost:8089
+# Server starts at http://localhost:8095
 ```
 
 ### Option 3: NPX (Quick Test)
