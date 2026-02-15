@@ -291,7 +291,7 @@ This comprehensive upgrade package contains everything needed to:
 2. Update dependencies: `pip install -r requirements.txt`
 3. Set environment variables (see .env.example)
 4. Restart service
-5. Verify health: `curl http://localhost:8089/health`
+5. Verify health: `curl http://localhost:8095/health`
 
 ### Step 4: Validate
 1. Test authentication (should fail without token)

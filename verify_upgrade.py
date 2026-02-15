@@ -78,7 +78,7 @@ class Verifier:
         # Use text=True for string output
         env = os.environ.copy()
         env["API_TOKEN"] = API_TOKEN
-        env["PORT"] = "8089"
+        env["PORT"] = "8095"
         
         proc = subprocess.Popen([sys.executable, "server.py"], 
                                 cwd=os.getcwd(),

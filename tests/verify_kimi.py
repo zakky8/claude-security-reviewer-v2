@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 API_KEY = "DYylzLTI.HXhARPLatmFmU3ccTTGrAM6I07lEtRXC"
 MODEL = "moonshot-v1-8k" # Standard Moonshot model
 API_BASE = "https://api.moonshot.cn/v1"

@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 
 def test_static_analysis_hook():
     print("\n--- Testing Static Analysis Hook (eval) ---")

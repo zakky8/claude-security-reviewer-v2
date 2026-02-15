@@ -84,14 +84,14 @@ If you installed locally or want to clean up:
 **New in v2.1.0:** All API requests must include the `API_TOKEN` as a Bearer token.
 
 ```bash
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -H "Authorization: Bearer <YOUR_API_TOKEN>" \
   -F "code_content=print('hello')" \
   -F "api_key=sk-..."
 ```
 
 ### Web Interface
-Visit `http://localhost:8089` in your browser.
+Visit `http://localhost:8095` in your browser.
 *   **Token**: You will need to provide your `API_TOKEN` to authenticate.
 
 ---

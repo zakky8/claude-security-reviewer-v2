@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 
 def test_multi_source_resilience():
     print("\n--- Testing Multi-Source Resilience (Failed GitHub + Valid Paste) ---")

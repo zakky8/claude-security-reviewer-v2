@@ -70,7 +70,7 @@ See DEPLOYMENT.md (Kubernetes section)
 
 ### 4. Validate
 ```bash
-curl http://localhost:8089/health
+curl http://localhost:8095/health
 ```
 
 ---
@@ -182,13 +182,13 @@ claude-security-reviewer-v2/
 
 **Before**:
 ```bash
-curl -X POST http://localhost:8089/api/scan ...
+curl -X POST http://localhost:8095/api/scan ...
 ```
 
 **After**:
 ```bash
 export API_TOKEN="your-token"
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -H "Authorization: Bearer $API_TOKEN" ...
 ```
 

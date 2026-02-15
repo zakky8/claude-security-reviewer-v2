@@ -2,7 +2,7 @@ import requests
 import json
 import os
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 API_KEY = "DYylzLTI.HXhARPLatmFmU3ccTTGrAM6I07lEtRXC"
 MODEL = "moonshotai/Kimi-K2.5"
 API_BASE = "https://inference.baseten.co/v1"

@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 
 def test_warning_fallback():
     print("\n--- Testing Warning Fallback (Invalid Key + Vulnerable Code) ---")

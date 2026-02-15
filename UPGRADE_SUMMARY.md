@@ -119,14 +119,14 @@ logger.info("Request received", extra={'files': count, 'source': 'github'})
 
 **Health Check Endpoint**:
 ```bash
-curl http://localhost:8089/health
+curl http://localhost:8095/health
 # Response: {"status": "healthy", "service": "claude-security-reviewer"}
 ```
 
 **Configuration from Environment**:
 ```python
 HOST = os.environ.get("HOST", "127.0.0.1")
-PORT = int(os.environ.get("PORT", "8089"))
+PORT = int(os.environ.get("PORT", "8095"))
 RELOAD = os.environ.get("RELOAD", "false").lower() == "true"
 ```
 
@@ -134,7 +134,7 @@ RELOAD = os.environ.get("RELOAD", "false").lower() == "true"
 ```python
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8089", "http://127.0.0.1:8089"],
+    allow_origins=["http://localhost:8095", "http://127.0.0.1:8095"],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
@@ -330,27 +330,27 @@ After upgrading, verify these work:
 
 ```bash
 # 1. Health check
-curl http://localhost:8089/health
+curl http://localhost:8095/health
 
 # 2. Authentication (should fail without token)
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -F "code_content=test" 2>&1 | grep "401"
 
 # 3. Authentication (should work with token)
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -H "Authorization: Bearer $API_TOKEN" \
   -F "code_content=test" \
   -F "api_key=sk-..." \
   -F "model=gpt-4o"
 
 # 4. GitHub URL validation (should reject invalid)
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -H "Authorization: Bearer $API_TOKEN" \
   -F "github_url=ftp://github.com/repo" \
   -F "api_key=sk-..." 2>&1 | grep "Invalid GitHub URL"
 
 # 5. File upload validation (should reject paths with ..)
-curl -X POST http://localhost:8089/api/scan \
+curl -X POST http://localhost:8095/api/scan \
   -H "Authorization: Bearer $API_TOKEN" \
   -F "files=@../../../etc/passwd" \
   -F "api_key=sk-..." 2>&1 | grep "Invalid filename"

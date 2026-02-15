@@ -449,7 +449,7 @@ if __name__ == "__main__":
     Claude Security Reviewer v2.1.0 | Secure Analysis Engine
     --------------------------------------------------
     Initializing Secure Multi-Agent Context...
-    System Ready: http://localhost:8089
+    System Ready: http://localhost:8095
     --------------------------------------------------
     """
     print(BANNER)

@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8089"
+BASE_URL = "http://localhost:8095"
 
 def test_valid_github_scan():
     print("\n--- Testing Valid GitHub Scan ---")
