@@ -25,24 +25,30 @@ This tool is built on **Claude Code**. You must have it installed:
 - **Windows**: `irm https://claude.ai/install.ps1 | iex`
 - **MacOS/Linux**: `curl -fsSL https://claude.ai/install.sh | bash`
 
-### 2. Installation
+### 2. Installation & Run
 
-#### Option A: Local Installation (Fastest)
+You can now start the security reviewer with a single command from inside your project folder:
+```powershell
+npx get-shit-done-cc
+```
+
+---
+
+#### Other Installation Options (If needed)
+
+**Local Installation (Fastest)**
 If you already have this repository cloned, just run the installer directly:
 ```powershell
 .\install.ps1
 ```
 
-#### Option B: Fresh Setup (For new machines)
+**Fresh Setup (For new machines)**
 Clone the repository first, then run the installer:
 ```powershell
 git clone https://github.com/zakky8/claude-code-security-reviewer-v2.git
 cd claude-code-security-reviewer-v2
 .\install.ps1
 ```
-
-> [!NOTE]
-> The remote one-liner (`irm | iex`) is currently disabled because this repository is set to **Private**. To enable it, change the repository visibility to **Public** in GitHub Settings.
 
 
 **Verify with:**
