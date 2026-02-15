@@ -1,13 +1,18 @@
 @echo off
 echo 🚀 Starting Claude Code Security Reviewer Installation (Windows)...
 
-:: 1. Clone repository
-if not exist "claude-code-security-review-v2" (
-    echo 📂 Cloning repository...
-    git clone https://github.com/anthropics/claude-code-security-review.git
-    cd claude-code-security-review
+:: 1. Check if running in current directory
+if exist "server.py" (
+    echo 📂 Found server.py in current directory. Skipping clone...
 ) else (
-    cd claude-code-security-review
+    :: Clone repository if not ensuring
+    if not exist "claude-code-security-review-v2" (
+        echo 📂 Cloning repository...
+        git clone https://github.com/anthropics/claude-code-security-review.git
+        cd claude-code-security-review
+    ) else (
+        cd claude-code-security-review
+    )
 )
 
 :: 2. Setup Virtual Environment

@@ -4,14 +4,19 @@
 
 echo "🚀 Starting Claude Code Security Reviewer Installation..."
 
-# 1. Clone the repository
-if [ ! -d "claude-code-security-review-v2" ]; then
-    echo "📂 Cloning repository..."
-    git clone https://github.com/anthropics/claude-code-security-review.git
-    cd claude-code-security-review || exit
+# 1. Check if running in current directory
+if [ -f "server.py" ]; then
+    echo "📂 Found server.py in current directory. Skipping clone..."
 else
-    echo "📂 Repository already exists, jumping in..."
-    cd claude-code-security-review || exit
+    # Clone the repository
+    if [ ! -d "claude-code-security-review-v2" ]; then
+        echo "📂 Cloning repository..."
+        git clone https://github.com/anthropics/claude-code-security-review.git
+        cd claude-code-security-review || exit
+    else
+        echo "📂 Repository already exists, jumping in..."
+        cd claude-code-security-review || exit
+    fi
 fi
 
 # 2. Setup Virtual Environment
