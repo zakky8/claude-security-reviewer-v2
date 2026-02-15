@@ -16,7 +16,7 @@ Write-Host "📂 Cloning latest version..." -ForegroundColor Cyan
 if (Test-Path ".git") {
     git pull
 } else {
-    git clone https://github.com/zakky8/claude-code-security-review-v2.git .
+    git clone https://github.com/zakky8/claude-code-security-reviewer-v2.git .
 }
 
 Write-Host "🐍 Setting up Virtual Environment..." -ForegroundColor Cyan
