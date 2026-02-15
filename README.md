@@ -20,48 +20,13 @@ So I built this. A system that doesn't just look for generic patterns, but actua
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-This tool is built on **Claude Code**. You must have it installed:
-- **Windows**: `irm https://claude.ai/install.ps1 | iex`
-- **MacOS/Linux**: `curl -fsSL https://claude.ai/install.sh | bash`
-
-### 2. Installation & Run
-
-#### The "Get Shit Done" One-Liner (NO CLONE REQUIRED)
-You can run this tool directly from GitHub without even cloning it:
+### 1. Ready to "Get Shit Done"? (NO CLONE REQUIRED)
+Run this from any terminal on any machine:
 ```powershell
 npx github:zakky8/claude-code-security-reviewer-v2
 ```
 
----
-
-#### Other Options
-
-**From Inside Project Folder**
-If you have already cloned the repo:
-```powershell
-npx get-shit-done-cc
-```
-
-**Local Script (Offline)**
-```powershell
-.\install.ps1
-```
-If you already have this repository cloned, just run the installer directly:
-```powershell
-.\install.ps1
-```
-
-**Fresh Setup (For new machines)**
-Clone the repository first, then run the installer:
-```powershell
-git clone https://github.com/zakky8/claude-code-security-reviewer-v2.git
-cd claude-code-security-reviewer-v2
-.\install.ps1
-```
-
-
-**Verify with:**
+**Verify arrival:**
 Open your browser to [http://localhost:8089](http://localhost:8089)
 
 ---
@@ -77,41 +42,17 @@ Open your browser to [http://localhost:8089](http://localhost:8089)
 
 ---
 
-## 🔥 v3.0 Enterprise Features
-
-- **Hybrid Intelligence**: Combining fixed security rules with LLM reasoning for **Zero False Negatives**.
-- **Modern Terminal (NEW)**: A premium CLI experience with splash screens, status indicators, and beautiful findings tables. 
-- **GitHub Action Integration**: Automatically audit every Pull Request.
-- **Circuit-Breaker Resilience**: Gracefully degrades to **Static-Only Scan** if API limits are hit.
-- **Privacy First**: Local processing in isolated directories. No code is stored.
+## 🔥 Features
+- **Hybrid Intelligence**: Combining fixed security rules with LLM reasoning.
+- **Modern Terminal**: Premium CLI with beautiful findings tables. 
+- **GitHub Action**: Audit every Pull Request automatically.
 
 ---
 
-## 💻 Usage Modes
-
-### 🌐 Web Dashboard
-Access the full visual experience at `http://localhost:8089`.
-
-### 📟 CLI (Modern Terminal)
-Run the audit directly from your terminal:
-```powershell
-python claudecode/github_action_audit.py
-```
-*Note: Detection is automatic. In interactive terminals, it shows the styled experience; in CI, it outputs structured JSON.*
-
-### 🧪 SAST Evaluator
-Evaluate specific PRs for accuracy:
-```powershell
-python -m claudecode.evals.run_eval owner/repo#123 --verbose
-```
-
----
-
-## 🤖 GitHub Action Integration
-Add this tool to your CI pipeline:
+## 🤖 GitHub Action
 ```yaml
 - name: Claude Security Review
-  uses: zakky8/claude-code-security-review-v2@v3
+  uses: zakky8/claude-code-security-reviewer-v2@v3
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -120,8 +61,8 @@ Add this tool to your CI pipeline:
 ---
 
 ## 🛡️ Security & Privacy
-*   **Isolated Processing**: Files are processed in temporary worktrees and wiped immediately.
-*   **No Data Retention**: Your code is sent only to your chosen providers for analysis. We do not store or train on your data.
+- **Isolated Processing**: Files are processed in temporary folders and wiped.
+- **No Data Retention**: Your code is never stored or used for training.
 
 ---
 
