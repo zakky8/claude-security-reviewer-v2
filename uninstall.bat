@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 > nul
 echo 🗑️  Uninstalling Claude Code Security Reviewer Local Environment...
 
 :: 1. Remove Virtual Environment

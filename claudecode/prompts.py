@@ -1,4 +1,25 @@
 """Security audit prompt templates."""
+import re
+
+def sanitize_prompt_input(text: str) -> str:
+    """Sanitize user input to prevent prompt injection."""
+    if not text:
+        return ""
+    
+    # Truncate overly long inputs to prevent context window exhaustion attacks
+    if len(text) > 5000: 
+        text = text[:5000] + "... [TRUNCATED]"
+        
+    # Remove typically dangerous instruction overrides if they appear at start of lines
+    # e.g. "Ignore previous instructions", "System:", etc.
+    # We replace strict role markers that might simulate conversation turns
+    text = re.sub(r'^(System|User|Assistant):', '# \g<1>:', text, flags=re.MULTILINE | re.IGNORECASE)
+    
+    # Escape triple backticks to prevent breaking out of code blocks if we were inside one (though here we are mostly in text)
+    # But often users put backticks in titles/descriptions. We can leave them but maybe limit their nesting?
+    # For now, simple length limit and role marker escaping is a good baseline.
+    
+    return text
 
 def get_security_audit_prompt(pr_data, pr_diff=None, include_diff=True, custom_scan_instructions=None):
     """Generate security audit prompt for Claude Code.
@@ -38,12 +59,17 @@ NOTE: PR diff was omitted due to size constraints. Please use the file explorati
     if custom_scan_instructions:
         custom_categories_section = f"\n{custom_scan_instructions}\n"
     
+    # Sanitize inputs
+    sanitized_title = sanitize_prompt_input(pr_data.get('title', ''))
+    sanitized_repo = sanitize_prompt_input(pr_data.get('head', {}).get('repo', {}).get('full_name', 'unknown'))
+    sanitized_user = sanitize_prompt_input(pr_data.get('user', ''))
+
     return f"""
-You are a senior security engineer conducting a focused security review of GitHub PR #{pr_data['number']}: "{pr_data['title']}"
+You are a senior security engineer conducting a focused security review of GitHub PR #{pr_data['number']}: "{sanitized_title}"
 
 CONTEXT:
-- Repository: {pr_data.get('head', {}).get('repo', {}).get('full_name', 'unknown')}
-- Author: {pr_data['user']}
+- Repository: {sanitized_repo}
+- Author: {sanitized_user}
 - Files changed: {pr_data['changed_files']}
 - Lines added: {pr_data['additions']}
 - Lines deleted: {pr_data['deletions']}
