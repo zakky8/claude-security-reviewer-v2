@@ -26,10 +26,24 @@ This tool is built on **Claude Code**. You must have it installed:
 - **MacOS/Linux**: `curl -fsSL https://claude.ai/install.sh | bash`
 
 ### 2. Installation
-Run this one command to install and start the dashboard:
+
+#### Option A: Local Installation (Fastest)
+If you already have this repository cloned, just run the installer directly:
 ```powershell
-iex (irm https://raw.githubusercontent.com/zakky8/claude-code-security-reviewer-v2/main/install.ps1)
+.\install.ps1
 ```
+
+#### Option B: Fresh Setup (For new machines)
+Clone the repository first, then run the installer:
+```powershell
+git clone https://github.com/zakky8/claude-code-security-reviewer-v2.git
+cd claude-code-security-reviewer-v2
+.\install.ps1
+```
+
+> [!NOTE]
+> The remote one-liner (`irm | iex`) is currently disabled because this repository is set to **Private**. To enable it, change the repository visibility to **Public** in GitHub Settings.
+
 
 **Verify with:**
 Open your browser to [http://localhost:8089](http://localhost:8089)
