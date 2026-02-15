@@ -27,16 +27,26 @@ This tool is built on **Claude Code**. You must have it installed:
 
 ### 2. Installation & Run
 
-You can now start the security reviewer with a single command from inside your project folder:
+#### The "Get Shit Done" One-Liner (NO CLONE REQUIRED)
+You can run this tool directly from GitHub without even cloning it:
 ```powershell
-npx get-shit-done-cc
+npx github:zakky8/claude-code-security-reviewer-v2
 ```
 
 ---
 
-#### Other Installation Options (If needed)
+#### Other Options
 
-**Local Installation (Fastest)**
+**From Inside Project Folder**
+If you have already cloned the repo:
+```powershell
+npx get-shit-done-cc
+```
+
+**Local Script (Offline)**
+```powershell
+.\install.ps1
+```
 If you already have this repository cloned, just run the installer directly:
 ```powershell
 .\install.ps1
